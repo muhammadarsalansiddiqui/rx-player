@@ -45,9 +45,25 @@ export interface IMetaPlaylistPrivateInfos { transportType : string;
                                              contentStart : number;
                                              contentEnd? : number; }
 
-export interface IPrivateInfos {
+// privateInfos specific to overlay Segments
+export interface IOverlaySegmentPrivateInfos {
+  start : number;
+  end : number;
+  version : number;
+  element : {
+    url : string;
+    format : string;
+    xAxis : string;
+    yAxis : string;
+    height : string;
+    width : string;
+  };
+}
+
+export interface ISegmentPrivateInfos {
   smoothInit? : ISmoothInitSegmentPrivateInfos;
   metaplaylistInfos? : IMetaPlaylistPrivateInfos;
+  overlayInfos? : IOverlaySegmentPrivateInfos;
 }
 
 // ISegment Object.
@@ -66,9 +82,9 @@ export interface ISegment {
                                   // TODO put in privateInfos?
   number? : number; // Optional number of the Segment
                     // TODO put in privateInfos?
-  privateInfos? : IPrivateInfos; // Allows a RepresentationIndex to store
-                                 // supplementary information in a given
-                                 // Segment for later downloading/parsing
+  privateInfos? : ISegmentPrivateInfos; // Allows a RepresentationIndex to store
+                                        // supplementary information in a given
+                                        // Segment for later downloading/parsing
   range? : [number, number]; // Optional byte range to retrieve the Segment
   timestampOffset? : number; // Estimated time, in seconds, at which the
                              // concerned segment will be offseted when

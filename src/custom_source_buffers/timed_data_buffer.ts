@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-import assert from "../../../utils/assert";
-import {
-  ITimedData,
-  ITimedDataSegment,
-} from "./types";
+import assert from "../utils/assert";
 import {
   areNearlyEqual,
   getDataAfter,
   getDataBefore,
+  ITimedData,
+  ITimedDataSegment,
   removeDataInfosBetween,
 } from "./utils";
 
@@ -30,9 +28,9 @@ import {
  * Manage the buffer of custom Sourcebuffer relying on segments of Timed data
  * (e.g., subtitles).
  * Allows to add, remove and recuperate data at given times.
- * @class TimedDataBufferManager
+ * @class TimedDataBuffer
  */
-export default class TimedDataBufferManager<T> {
+export default class TimedDataBuffer<T> {
   private _buffer : Array<ITimedDataSegment<T>>;
 
   constructor() {
