@@ -49,15 +49,16 @@ export interface IMetaPlaylistPrivateInfos { transportType : string;
 export interface IOverlaySegmentPrivateInfos {
   start : number;
   end : number;
+  timescale : number;
   version : number;
-  element : {
+  elements : Array<{
     url : string;
     format : string;
     xAxis : string;
     yAxis : string;
     height : string;
     width : string;
-  };
+  }>;
 }
 
 export interface ISegmentPrivateInfos {

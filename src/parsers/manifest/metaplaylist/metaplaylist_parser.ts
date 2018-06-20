@@ -26,6 +26,7 @@ import {
   IParsedManifest,
   IParsedPeriod,
 } from "../types";
+import OverlayRepresentationIndex from "./overlay_representation_index";
 import MetaRepresentationIndex from "./representation_index";
 
 export type IParserResponse<T> =
@@ -44,11 +45,27 @@ export interface IMetaPlaylistTextTrack {
   codecs? : string;
 }
 
+export interface IMetaPlaylistOverlay {
+  start : number;
+  end : number;
+  timescale : number;
+  version : number;
+  elements : Array<{
+    url : string;
+    format : string;
+    xAxis : string;
+    yAxis : string;
+    height : string;
+    width : string;
+  }>;
+}
+
 export interface IMetaPlaylist {
   type : "MPL";
   version : string;
   dynamic? : boolean;
   pollInterval? : number;
+  overlays? : IMetaPlaylistOverlay[];
   contents: Array<{
     url: string;
     startTime: number;
@@ -299,6 +316,26 @@ function createManifest(
       throw new Error("MPL Parser: can't define duration of manifest.");
     }
     duration = lastEnd - firstStart;
+  }
+
+  const { overlays } = mplData;
+  if (overlays != null && overlays.length > 0) {
+    for (let i = 0; i < periods.length; i++) {
+      const period = periods[i];
+      const periodEnd =
+        period.end != null ? period.end :
+        period.duration != null ? period.start + period.duration :
+        undefined;
+      period.adaptations.overlay = [{
+        id: formatId(period.id) + "_" + "ada_ov",
+        type: "overlay",
+        representations: [{
+          id: formatId(period.id) + "_" + "rep_ov",
+          bitrate: 0,
+          index: new OverlayRepresentationIndex(overlays, period.start, periodEnd),
+        }],
+      }];
+    }
   }
 
   const time = performance.now();
