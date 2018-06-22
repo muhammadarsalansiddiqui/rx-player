@@ -370,30 +370,26 @@ export default function(options : ITransportOptions): ITransportPipelines {
     parser(
       args : ISegmentParserArguments<ArrayBuffer|Uint8Array|null>
     ) : IOverlayParserObservable {
-      const { segment } = args;
+      const { segment } = args.content;
       const { privateInfos } = segment;
       if (!privateInfos || privateInfos.overlayInfos == null) {
         throw new Error("An overlay segment should have private infos.");
       }
       const { overlayInfos } = privateInfos;
       const end = segment.duration != null ?
-        segment.duration - segment.time : overlayInfos.end;
-      return observableOf({
-        segmentOffset: 0,
-        segmentInfos: {
-          time: segment.time,
-          duration: segment.duration,
-          timescale: segment.timescale,
-        },
-        segmentData: {
-          data: [overlayInfos],
-          start: segment.time,
-          end,
-          type: "metaplaylist",
-          timeOffset: 0,
-          timescale: segment.timescale,
-        },
-      });
+        segment.duration + segment.time : overlayInfos.end;
+      return observableOf({ chunkOffset: 0,
+                            chunkInfos: { time: segment.time,
+                                            duration: segment.duration,
+                                            timescale: segment.timescale },
+                            appendWindow: [ args.content.period.start,
+                                            args.content.period.end ],
+                            chunkData: { data: [overlayInfos],
+                                         start: segment.time,
+                                         end,
+                                         type: "metaplaylist",
+                                         timeOffset: 0,
+                                         timescale: segment.timescale } });
     },
   };
 

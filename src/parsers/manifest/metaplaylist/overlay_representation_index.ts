@@ -69,21 +69,20 @@ export default class OverlayRepresentationIndex implements IRepresentationIndex 
   getSegments(up : number, to : number) : ISegment[] {
     return this._overlays
       .filter(({ start, end }) => {
-        return start < to && end > up;
+        return start < (to + up) && end > up;
       })
       .map(overlayData => {
         const time = Math.max(overlayData.start, this._periodStart);
-        const duration = this._periodEnd == null ? undefined :
+        const duration = this._periodEnd == null ?
+          Number.MAX_VALUE :
           Math.min(overlayData.end, this._periodEnd) - time;
-        return {
-          isInit: false,
-          id: "ov_" + time + duration,
-          time,
-          duration,
-          timescale: overlayData.timescale,
-          mediaURL: null,
-          privateInfos: { overlayInfos: overlayData },
-        };
+        return { isInit: false,
+                 id: "ov_" + time + duration,
+                 time,
+                 duration,
+                 timescale: overlayData.timescale,
+                 mediaURL: null,
+                 privateInfos: { overlayInfos: overlayData } };
       });
   }
 
@@ -117,6 +116,18 @@ export default class OverlayRepresentationIndex implements IRepresentationIndex 
    */
   checkDiscontinuity() : -1 {
     return -1;
+  }
+
+  canBeOutOfSyncError() : boolean {
+    return false;
+  }
+
+  isFinished() : boolean {
+    return this._periodEnd !== null;
+  }
+
+  isSegmentStillAvailable() : boolean {
+    return true;
   }
 
   _addSegments() : void {
