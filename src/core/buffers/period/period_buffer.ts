@@ -46,6 +46,7 @@ import ABRManager from "../../abr";
 import { SegmentPipelinesManager } from "../../pipelines";
 import SourceBuffersStore, {
   IBufferType,
+  IOverlaySourceBufferOptions,
   ITextTrackSourceBufferOptions,
   QueuedSourceBuffer,
 } from "../../source_buffers";
@@ -83,6 +84,7 @@ export interface IPeriodBufferArguments {
   segmentPipelinesManager : SegmentPipelinesManager<any>;
   sourceBuffersStore : SourceBuffersStore;
   options: { manualBitrateSwitchingMode : "seamless" | "direct";
+             overlayOptions? : IOverlaySourceBufferOptions;
              textTrackOptions? : ITextTrackSourceBufferOptions; };
   wantedBufferAhead$ : BehaviorSubject<number>;
 }
@@ -231,7 +233,10 @@ function createOrReuseQueuedSourceBuffer<T>(
   sourceBuffersStore : SourceBuffersStore,
   bufferType : IBufferType,
   adaptation : Adaptation,
-  options: { textTrackOptions? : ITextTrackSourceBufferOptions }
+  options: {
+    overlayOptions? : IOverlaySourceBufferOptions;
+    textTrackOptions? : ITextTrackSourceBufferOptions;
+  }
 ) : QueuedSourceBuffer<T> {
   const currentQSourceBuffer = sourceBuffersStore.get(bufferType);
   if (currentQSourceBuffer != null) {
@@ -239,7 +244,14 @@ function createOrReuseQueuedSourceBuffer<T>(
     return currentQSourceBuffer;
   }
   const codec = getFirstDeclaredMimeType(adaptation);
-  const sbOptions = bufferType === "text" ?  options.textTrackOptions : undefined;
+  const sbOptions = (() => {
+      if (bufferType === "text") {
+        return options.textTrackOptions;
+      }
+      if (bufferType === "overlay") {
+        return options.overlayOptions;
+      }
+    })();
   return sourceBuffersStore.createSourceBuffer(bufferType, codec, sbOptions);
 }
 
