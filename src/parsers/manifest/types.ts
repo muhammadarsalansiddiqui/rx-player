@@ -83,12 +83,25 @@ export interface IParsedPeriod {
                  // being updated
 }
 
+// Period for which the adaptations are not yet known
+export interface IParsedPartialPeriod {
+  // required
+  id : string;
+  start : number;
+
+  // optional
+  adaptations? : IParsedAdaptations;
+  duration? : number;
+  end? : number;
+}
+
 // Representation of the whole Manifest file
 export interface IParsedManifest {
   // required
   id: string; // Unique ID for the manifest.
   isLive : boolean; // If true, this Manifest describes a content not finished yet.
-  periods: IParsedPeriod[]; // Periods contained in this manifest.
+  periods: Array<IParsedPeriod|IParsedPartialPeriod>;  // Periods contained in
+                                                       // this manifest.
   transportType: string; // "smooth", "dash" etc.
 
   // optional

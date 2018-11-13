@@ -38,7 +38,7 @@ import { formatError } from "../../../errors";
 import log from "../../../log";
 import Manifest, {
   Adaptation,
-  Period,
+  IFetchedPeriod,
 } from "../../../manifest";
 import { getLeftSizeOfRange } from "../../../utils/ranges";
 import WeakMapMemory from "../../../utils/weak_map_memory";
@@ -78,7 +78,7 @@ export interface IPeriodBufferArguments {
   bufferType : IBufferType;
   clock$ : Observable<IPeriodBufferClockTick>;
   content : { manifest : Manifest;
-              period : Period; };
+              period : IFetchedPeriod; };
   garbageCollectors : WeakMapMemory<QueuedSourceBuffer<unknown>, Observable<never>>;
   segmentPipelinesManager : SegmentPipelinesManager<any>;
   sourceBuffersStore : SourceBuffersStore;

@@ -28,7 +28,10 @@ import Adaptation, {
   IAdaptationType,
   IRepresentationFilter,
 } from "./adaptation";
-import Period from "./period";
+import Period, {
+  IFetchedPeriod,
+  IPartialPeriod,
+} from "./period";
 import Representation from "./representation";
 import { StaticRepresentationIndex } from "./representation_index";
 import updatePeriods from "./update_periods";
@@ -59,7 +62,7 @@ interface IManifestParsingOptions {
 
 export interface IDecipherabilityUpdateElement {
   manifest : Manifest;
-  period : Period;
+  period : IFetchedPeriod;
   adaptation : Adaptation;
   representation : Representation;
 }
@@ -264,7 +267,7 @@ export default class Manifest extends EventEmitter<IManifestEvents> {
     warnOnce("manifest.getAdaptations() is deprecated." +
              " Please use manifest.period[].getAdaptations() instead");
     const firstPeriod = this.periods[0];
-    if (firstPeriod == null) {
+    if (firstPeriod == null || !firstPeriod.isFetched()) {
       return [];
     }
     const adaptationsByType = firstPeriod.adaptations;
@@ -287,7 +290,7 @@ export default class Manifest extends EventEmitter<IManifestEvents> {
     warnOnce("manifest.getAdaptationsForType(type) is deprecated." +
              " Please use manifest.period[].getAdaptationsForType(type) instead");
     const firstPeriod = this.periods[0];
-    if (firstPeriod == null) {
+    if (firstPeriod == null || !firstPeriod.isFetched()) {
       return [];
     }
     const adaptationsForType = firstPeriod.adaptations[adaptationType];
@@ -474,10 +477,14 @@ export default class Manifest extends EventEmitter<IManifestEvents> {
     });
 
     if (newImageTracks.length > 0 && this.periods.length > 0) {
-      const { adaptations } = this.periods[0];
-      adaptations.image =
-        adaptations.image != null ? adaptations.image.concat(newImageTracks) :
-                                    newImageTracks;
+      const firstPeriod = this.periods[0];
+      if (firstPeriod.adaptations == null) {
+        firstPeriod.adaptations = {};
+      }
+      const { adaptations } = firstPeriod;
+      adaptations.image = adaptations.image != null ? adaptations.image
+                                                        .concat(newImageTracks) :
+                                                      newImageTracks;
     }
   }
 
@@ -525,10 +532,14 @@ export default class Manifest extends EventEmitter<IManifestEvents> {
     }, []);
 
     if (newTextAdaptations.length > 0 && this.periods.length > 0) {
-      const { adaptations } = this.periods[0];
-      adaptations.text =
-        adaptations.text != null ? adaptations.text.concat(newTextAdaptations) :
-                                   newTextAdaptations;
+      const firstPeriod = this.periods[0];
+      if (firstPeriod.adaptations == null) {
+        firstPeriod.adaptations = {};
+      }
+      const { adaptations } = firstPeriod;
+      adaptations.text = adaptations.text != null ? adaptations.text
+                                                      .concat(newTextAdaptations) :
+                                                    newTextAdaptations;
     }
   }
 }
@@ -549,15 +560,17 @@ function updateDeciperability(
   const updates : IDecipherabilityUpdateElement[] = [];
   for (let i = 0; i < manifest.periods.length; i++) {
     const period = manifest.periods[i];
-    const adaptations = period.getAdaptations();
-    for (let j = 0; j < adaptations.length; j++) {
-      const adaptation = adaptations[j];
-      const representations = adaptation.representations;
-      for (let k = 0; k < representations.length; k++) {
-        const representation = representations[k];
-        if (!predicate(representation)) {
-          updates.push({ manifest, period, adaptation, representation });
-          representation.decipherable = false;
+    if (period.isFetched()) {
+      const adaptations = period.getAdaptations();
+      for (let j = 0; j < adaptations.length; j++) {
+        const adaptation = adaptations[j];
+        const representations = adaptation.representations;
+        for (let k = 0; k < representations.length; k++) {
+          const representation = representations[k];
+          if (!predicate(representation)) {
+            updates.push({ manifest, period, adaptation, representation });
+            representation.decipherable = false;
+          }
         }
       }
     }
@@ -566,7 +579,9 @@ function updateDeciperability(
 }
 
 export {
+  IFetchedPeriod,
   IManifestParsingOptions,
+  IPartialPeriod,
   ISupplementaryImageTrack,
   ISupplementaryTextTrack,
 };

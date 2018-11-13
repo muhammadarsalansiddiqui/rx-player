@@ -29,8 +29,8 @@ import log from "../../../log";
 import Manifest, {
   Adaptation,
   // areSameContent,
+  IFetchedPeriod,
   ISegment,
-  Period,
   Representation,
 } from "../../../manifest";
 import SimpleSet from "../../../utils/simple_set";
@@ -42,7 +42,7 @@ const { BITRATE_REBUFFERING_RATIO,
 
 export interface ISegmentFilterArgument { content: { adaptation : Adaptation;
                                                      manifest : Manifest;
-                                                     period : Period;
+                                                     period : IFetchedPeriod;
                                                      representation : Representation; };
                                           fastSwitchingStep : number | undefined;
                                           loadedSegmentPendingPush : SimpleSet;
@@ -156,11 +156,11 @@ export default function getNeededSegments({
  */
 function shouldContentBeReplaced(
   oldContent : { adaptation : Adaptation;
-                 period : Period;
+                 period : IFetchedPeriod;
                  representation : Representation;
                  segment : ISegment; },
   currentContent : { adaptation : Adaptation;
-                     period : Period;
+                     period : IFetchedPeriod;
                      representation : Representation; },
   fastSwitchingStep? : number
 ) : boolean {

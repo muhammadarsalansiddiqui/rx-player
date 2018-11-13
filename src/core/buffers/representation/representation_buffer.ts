@@ -53,8 +53,8 @@ import { ICustomError } from "../../../errors";
 import log from "../../../log";
 import Manifest, {
   Adaptation,
+  IFetchedPeriod,
   ISegment,
-  Period,
   Representation,
 } from "../../../manifest";
 import SimpleSet from "../../../utils/simple_set";
@@ -95,7 +95,7 @@ export interface IRepresentationBufferArguments<T> {
   clock$ : Observable<IRepresentationBufferClockTick>;
   content: { adaptation : Adaptation;
              manifest : Manifest;
-             period : Period;
+             period : IFetchedPeriod;
              representation : Representation; };
   queuedSourceBuffer : QueuedSourceBuffer<T>;
   segmentFetcher : IPrioritizedSegmentFetcher<T>;
