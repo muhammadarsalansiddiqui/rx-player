@@ -65,6 +65,7 @@ export function imageParser(
                               timescale: segment.timescale } :
                             null,
                           chunkOffset: segment.timestampOffset || 0,
+                          segmentProtection: null,
                           appendWindow: [period.start, period.end] });
   }
 
@@ -79,5 +80,6 @@ export function imageParser(
                                         duration: Number.MAX_VALUE,
                                         timescale: bifObject.timescale },
                         chunkOffset: segment.timestampOffset || 0,
+                        segmentProtection: null,
                         appendWindow: [period.start, period.end] });
 }

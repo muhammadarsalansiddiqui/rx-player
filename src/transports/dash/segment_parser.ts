@@ -20,6 +20,7 @@ import {
 import {
   getMDHDTimescale,
   getSegmentsFromSidx,
+  takePSSHOut,
 } from "../../parsers/containers/isobmff";
 import {
   getSegmentsFromCues,
@@ -28,6 +29,7 @@ import {
 import {
   ISegmentParserArguments,
   ISegmentParserObservable,
+  ISegmentProtection,
 } from "../types";
 import isWEBMEmbeddedTrack from "./is_webm_embedded_track";
 import getISOBMFFTimingInfos from "./isobmff_timing_infos";
@@ -44,6 +46,7 @@ export default function parser({ content,
     return observableOf({ chunkData: null,
                           chunkInfos: null,
                           chunkOffset: 0,
+                          segmentProtection: null,
                           appendWindow: [period.start, period.end] });
   }
 
@@ -67,6 +70,7 @@ export default function parser({ content,
     return observableOf({ chunkData,
                           chunkInfos,
                           chunkOffset,
+                          segmentProtection: null,
                           appendWindow: [period.start, period.end] });
   } else { // it is an initialization segment
     if (nextSegments) {
@@ -80,9 +84,18 @@ export default function parser({ content,
                                                               duration: 0,
                                                               timescale } :
                                                             null;
+    let segmentProtection : ISegmentProtection | null = null;
+    if (!isWEBM) {
+      const psshBoxes = takePSSHOut(chunkData);
+      if (psshBoxes.length > 0) {
+        segmentProtection = { type: "pssh",
+                              value: psshBoxes };
+      }
+    }
     return observableOf({ chunkData,
                           chunkInfos,
                           chunkOffset: segment.timestampOffset || 0,
+                          segmentProtection,
                           appendWindow: [period.start, period.end] });
   }
 }

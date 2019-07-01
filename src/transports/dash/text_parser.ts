@@ -73,6 +73,7 @@ function parseMP4EmbeddedTrack({ response,
     return observableOf({ chunkData: null,
                           chunkInfos,
                           chunkOffset: segment.timestampOffset || 0,
+                          segmentProtection: null,
                           appendWindow: [period.start, period.end] });
   } else { // not init
     const chunkInfos = getISOBMFFTimingInfos(chunkBytes, isChunked, segment, init);
@@ -125,6 +126,7 @@ function parseMP4EmbeddedTrack({ response,
     return observableOf({ chunkData,
                           chunkInfos,
                           chunkOffset: segment.timestampOffset || 0,
+                          segmentProtection: null,
                           appendWindow: [period.start, period.end] });
   }
 }
@@ -140,6 +142,7 @@ function parsePlainTextTrack({ response,
     return observableOf({ chunkData: null,
                           chunkInfos: null,
                           chunkOffset: segment.timestampOffset || 0,
+                          segmentProtection: null,
                           appendWindow: [period.start, period.end] });
   }
 
@@ -199,6 +202,7 @@ function parsePlainTextTrack({ response,
   return observableOf({ chunkData,
                         chunkInfos: null,
                         chunkOffset: segment.timestampOffset || 0,
+                        segmentProtection: null,
                         appendWindow: [period.start, period.end] });
 }
 
@@ -220,6 +224,7 @@ export default function textTrackParser({ response,
     return observableOf({ chunkData: null,
                           chunkInfos: null,
                           chunkOffset: segment.timestampOffset || 0,
+                          segmentProtection: null,
                           appendWindow: [period.start, period.end] });
   }
 
