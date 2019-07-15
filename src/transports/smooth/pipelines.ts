@@ -175,6 +175,7 @@ export default function(
       response,
       adaptation,
       manifest,
+      representation,
     } : ISegmentParserArguments< ArrayBuffer | Uint8Array | null >
     ) : ISegmentParserObservable< ArrayBuffer | Uint8Array > {
       const { responseData } = response;
@@ -200,7 +201,8 @@ export default function(
         const psshBoxes = takePSSHOut(responseBuffer);
         let segmentProtection : ISegmentProtection | null = null;
         if (psshBoxes.length > 0) {
-          segmentProtection = { type: "pssh",
+          representation._addProtectionData("cenc", psshBoxes);
+          segmentProtection = { type: "cenc",
                                 value: psshBoxes };
         }
         return observableOf({ segmentData: responseBuffer,

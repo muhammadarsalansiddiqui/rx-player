@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import { IParsedRepresentation } from "../parsers/manifest";
+import {
+  IContentProtections,
+  IParsedRepresentation,
+} from "../parsers/manifest";
+import { areBytesEqual } from "../utils/byte_parsing";
 import IRepresentationIndex from "./representation_index";
-
-interface IContentProtection { keyId? : Uint8Array;
-                               systemId? : string; }
 
 /**
  * Normalized Representation structure.
@@ -58,7 +59,7 @@ class Representation {
   public height? : number;
 
   // DRM Informations for this Representation.
-  public contentProtections? : IContentProtection[];
+  public contentProtections? : IContentProtections;
 
   // Whether we are able to decrypt this Representation / unable to decrypt it or
   // if we don't know yet:
@@ -107,6 +108,30 @@ class Representation {
    */
   getMimeTypeString() : string {
     return `${this.mimeType};codecs="${this.codec}"`;
+  }
+
+  /**
+   * Add protection data to the Representation to be able to properly blacklist
+   * it if that data is.
+   * /!\ Mutates the current Representation
+   * @param {string} type
+   * @param {Uint8Array} data
+   */
+  _addProtectionData(type : string, data : Uint8Array) {
+    const newElement = { type, data };
+    if (this.contentProtections == null) {
+      this.contentProtections = { keyIds: [], initData: [newElement] };
+      return;
+    }
+    const initData = this.contentProtections.initData;
+    for (let i = initData.length - 1; i >= 0; i--) {
+      if (type === initData[i].type &&
+          areBytesEqual(initData[i].data, data))
+      {
+        return;
+      }
+    }
+    this.contentProtections.initData.push(newElement);
   }
 }
 
