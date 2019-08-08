@@ -77,7 +77,7 @@ export default class OverlayRepresentationIndex implements IRepresentationIndex 
           Number.MAX_VALUE :
           Math.min(overlayData.end, this._periodEnd) - time;
         return { isInit: false,
-                 id: "ov_" + time + duration,
+                 id: `ov_${time}_${duration}`,
                  time,
                  duration,
                  timescale: overlayData.timescale,

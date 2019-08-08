@@ -76,12 +76,10 @@ export default function parseOverlays(
     }
 
     // add period without overlay if one
-    if (timescaledStart > newLimitEnd && baseElements.length) {
-      parsedOverlays.push({
-        start: newLimitEnd,
-        end: timescaledStart,
-        elements: baseElements,
-      });
+    if (timescaledStart > newLimitEnd && baseElements.length > 0) {
+      parsedOverlays.push({ start: newLimitEnd,
+                            end: timescaledStart,
+                            elements: baseElements });
     }
 
     // if last overlay here
@@ -91,12 +89,10 @@ export default function parseOverlays(
       const allElements = baseElements.concat(overlayData.elements);
 
       // this is the last overlay push it
-      if (allElements.length) {
-        parsedOverlays.push({
-          start: timescaledStart,
-          end: newLimitEnd,
-          elements: allElements,
-        });
+      if (allElements.length > 0) {
+        parsedOverlays.push({ start: timescaledStart,
+                              end: newLimitEnd,
+                              elements: allElements });
       }
     } else {
       const nextOverlay = overlays[i + 1];
@@ -109,12 +105,10 @@ export default function parseOverlays(
         const allElements = baseElements.concat(overlayData.elements);
 
         // The next one is trictly after this one, push the current one only
-        if (allElements.length) {
-          parsedOverlays.push({
-            start: timescaledStart,
-            end: Math.min(timescaledEnd, baseEnd),
-            elements: allElements,
-          });
+        if (allElements.length > 0) {
+          parsedOverlays.push({ start: timescaledStart,
+                                end: Math.min(timescaledEnd, baseEnd),
+                                elements: allElements });
         }
       } else {
         // move offset to current overlay
@@ -122,13 +116,11 @@ export default function parseOverlays(
         const allElements = baseElements.concat(overlayData.elements);
 
         // first push the part without the next one
-        if (allElements.length) {
+        if (allElements.length > 0) {
           if (nextOvTimescaledStart > timescaledStart) {
-            parsedOverlays.push({
-              start: timescaledStart,
-              end: Math.min(newLimitEnd, nextOvTimescaledStart),
-              elements: allElements,
-            });
+            parsedOverlays.push({ start: timescaledStart,
+                                  end: Math.min(newLimitEnd, nextOvTimescaledStart),
+                                  elements: allElements });
           }
         }
 
@@ -156,12 +148,10 @@ export default function parseOverlays(
   }
 
   // we looped through every possible overlays
-  if (newLimitEnd < baseEnd && baseElements.length) {
-    parsedOverlays.push({
-      start: newLimitEnd,
-      end: baseEnd,
-      elements: baseElements,
-    });
+  if (newLimitEnd < baseEnd && baseElements.length > 0) {
+    parsedOverlays.push({ start: newLimitEnd,
+                          end: baseEnd,
+                          elements: baseElements });
   }
   return parsedOverlays;
 }

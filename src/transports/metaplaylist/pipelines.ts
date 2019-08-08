@@ -372,7 +372,7 @@ export default function(options : ITransportOptions): ITransportPipelines {
     ) : IOverlayParserObservable {
       const { segment } = args.content;
       const { privateInfos } = segment;
-      if (!privateInfos || privateInfos.overlayInfos == null) {
+      if (privateInfos === undefined || privateInfos.overlayInfos == null) {
         throw new Error("An overlay segment should have private infos.");
       }
       const { overlayInfos } = privateInfos;
