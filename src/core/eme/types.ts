@@ -21,6 +21,7 @@ import {
   ICustomMediaKeySystemAccess,
 } from "../../compat";
 import { ICustomError } from "../../errors";
+import Manifest from "../../manifest";
 import SessionsStore from "./utils/open_sessions_store";
 import PersistedSessionsStore from "./utils/persisted_session_store";
 
@@ -76,7 +77,8 @@ export type IEMEManagerEvent = IEMEWarningEvent |
                                IBlacklistProtectionDataEvent;
 
 export interface IContentProtection { type : string;
-                                      data : Uint8Array; }
+                                      data : Uint8Array;
+                                      content : { manifest : Manifest }; }
 
 // Infos indentifying a MediaKeySystemAccess
 export interface IKeySystemAccessInfos {
@@ -118,7 +120,10 @@ export type TypedArray = Int8Array |
 // Options given by the caller
 export interface IKeySystemOption {
   type : string;
-  getLicense : (message : Uint8Array, messageType : string, initData : ArrayBuffer)
+  getLicense : (message : Uint8Array,
+                messageType : string,
+                initData : ArrayBuffer,
+                manifest : Manifest | null)
                  => Promise<TypedArray |
                             ArrayBuffer |
                             null> |

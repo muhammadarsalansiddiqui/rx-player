@@ -103,7 +103,7 @@ export default function EMEManager(
       if (initData == null) {
         return EMPTY;
       }
-      return observableOf({ type: initDataType, data: initData });
+      return observableOf({ type: initDataType, data: initData, content: null });
     }));
 
   const externalEvents$ = contentProtections$.pipe(
@@ -121,7 +121,7 @@ export default function EMEManager(
       const { keySystemOptions, mediaKeys } = mediaKeysInfos;
       const { serverCertificate } = keySystemOptions;
 
-      const { type: initDataType, data: initData } = encryptedEvent;
+      const { type: initDataType, data: initData, content } = encryptedEvent;
 
       const blacklistError = blacklistedInitData.get(initDataType, initData);
       if (blacklistError != null) {
@@ -150,6 +150,7 @@ export default function EMEManager(
           type: evt.type,
           value: { initData: evt.value.initData,
                    initDataType: evt.value.initDataType,
+                   content,
                    mediaKeySession: evt.value.mediaKeySession,
                    sessionType: evt.value.sessionType,
                    keySystemOptions: mediaKeysInfos.keySystemOptions,
@@ -177,6 +178,7 @@ export default function EMEManager(
 
       const { initData,
               initDataType,
+              content,
               mediaKeySession,
               sessionType,
               keySystemOptions,
@@ -199,7 +201,8 @@ export default function EMEManager(
 
       return observableMerge(SessionEventsListener(mediaKeySession,
                                                    keySystemOptions,
-                                                   initData),
+                                                   initData,
+                                                   content),
                              generateRequest$)
         .pipe(catchError(err => {
           if (!(err instanceof BlacklistedSessionError)) {

@@ -44,6 +44,7 @@ import {
   ICustomError,
 } from "../../errors";
 import log from "../../log";
+import Manifest from "../../manifest";
 import castToObservable from "../../utils/cast_to_observable";
 import retryObsWithBackoff from "../../utils/rx-retry_with_backoff";
 import tryCatch from "../../utils/rx-try_catch";
@@ -104,7 +105,8 @@ export class BlacklistedSessionError extends Error {
 export default function SessionEventsListener(
   session: MediaKeySession|ICustomMediaKeySession,
   keySystem: IKeySystemOption,
-  initData: ArrayBuffer
+  initData: ArrayBuffer,
+  content : null | { manifest : Manifest }
 ) : Observable<IMediaKeySessionHandledEvents | IEMEWarningEvent> {
   log.debug("EME: Binding session events", session);
 
@@ -180,7 +182,9 @@ export default function SessionEventsListener(
       log.debug(`EME: Event message type ${messageType}`, session, messageEvent);
 
       const getLicense$ = observableDefer(() => {
-        const getLicense = keySystem.getLicense(message, messageType, initData);
+        const manifest = content != null ? content.manifest :
+                                           null;
+        const getLicense = keySystem.getLicense(message, messageType, initData, manifest);
         const getLicenseTimeout = getLicenseConfig.timeout != null ?
           getLicenseConfig.timeout :
           10 * 1000;

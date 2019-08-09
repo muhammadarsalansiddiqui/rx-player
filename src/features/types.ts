@@ -24,6 +24,7 @@ import {
   IDirectfileEvent,
   IDirectFileOptions,
 } from "../core/init/initialize_directfile";
+import Manifest from "../manifest";
 import {
   IHTMLTextTracksParserFn,
   INativeTextTracksParserFn,
@@ -34,7 +35,8 @@ export type IDirectFileInit = (args : IDirectFileOptions) =>
                                 Observable<IDirectfileEvent>;
 
 interface IContentProtection { type : string;
-                               data : Uint8Array; }
+                               data : Uint8Array;
+                               content : { manifest : Manifest }; }
 
 export type IEMEManager = (mediaElement : HTMLMediaElement,
                            keySystems: IKeySystemOption[],

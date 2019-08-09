@@ -29,6 +29,7 @@ import {
 import { ICustomMediaKeySession } from "../../compat";
 import config from "../../config";
 import log from "../../log";
+import Manifest from "../../manifest";
 import createSession from "./create_session";
 import { IMediaKeysInfos } from "./types";
 import isSessionUsable from "./utils/is_session_usable";
@@ -36,6 +37,7 @@ import isSessionUsable from "./utils/is_session_usable";
 export interface IEncryptedEvent {
   type : string | undefined; // initialization data type
   data : Uint8Array; // initialization data
+  content : null | { manifest : Manifest };
 }
 
 export interface ISessionData {
