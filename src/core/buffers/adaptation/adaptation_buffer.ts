@@ -85,6 +85,7 @@ export interface IAdaptationBufferClockTick extends IRepresentationBufferClockTi
   isLive : boolean; // If true, we're playing a live content
   isPaused: boolean; // If true, the player is on pause
   speed : number; // Current regular speed asked by the user
+  liveGap? : number; // Gap between the live edge and current position
 }
 
 export interface IAdaptationBufferArguments<T> {

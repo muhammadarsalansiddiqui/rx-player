@@ -23,6 +23,7 @@ import { Representation } from "../../manifest";
 import { IBufferType } from "../source_buffers";
 import BandwidthEstimator from "./bandwidth_estimator";
 import createFilters from "./create_filters";
+import LowLatencyBandwidthCalculator from "./low_latency_bandwidth_estimator";
 import RepresentationEstimator, {
   IABRBufferEvents,
   IABREstimate,
@@ -65,6 +66,7 @@ export interface IABRManagerArguments {
  */
 export default class ABRManager {
   private _bandwidthEstimators : Partial<Record<IBufferType, BandwidthEstimator>>;
+  private _lowLatencyBandwidthEstimator : LowLatencyBandwidthCalculator;
   private _initialBitrates : Partial<Record<IBufferType, number>>;
   private _manualBitrates : Partial<Record<IBufferType, Observable<number>>>;
   private _maxAutoBitrates : Partial<Record<IBufferType, Observable<number>>>;
@@ -81,6 +83,7 @@ export default class ABRManager {
     this._throttlers = options.throttlers || {};
     this._bandwidthEstimators = {};
     this._lowLatencyMode = options.lowLatencyMode;
+    this._lowLatencyBandwidthEstimator = new LowLatencyBandwidthCalculator();
   }
 
   /**
@@ -107,6 +110,8 @@ export default class ABRManager {
                                    this._throttlers.throttleBitrate[type],
                                    this._throttlers.throttle[type]);
     return RepresentationEstimator({ bandwidthEstimator,
+                                     lowLatencyBandwidthCalculator:
+                                      this._lowLatencyBandwidthEstimator,
                                      bufferEvents$,
                                      clock$,
                                      filters$,
