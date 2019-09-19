@@ -46,14 +46,14 @@ import {
   IKeySystemOption,
 } from "../eme";
 import createEMEManager, { IEMEDisabledEvent } from "./create_eme_manager";
+import createInitClock from "./create_init_clock";
 import EVENTS from "./events_generators";
 import { IInitialTimeOptions } from "./get_initial_time";
-import getStalledEvents from "./get_stalled_events";
 import seekAndLoadOnMediaEvents from "./initial_seek_and_play";
 import isEMEReadyEvent from "./is_eme_ready";
 import throwOnMediaError from "./throw_on_media_error";
 import {
-  IInitClockTick,
+  IClockTick,
   ILoadedEvent,
   ISpeedChangedEvent,
   IStalledEvent,
@@ -108,7 +108,7 @@ function getDirectFileInitialTime(
 
 // Argument used by `initializeDirectfileContent`
 export interface IDirectFileOptions { autoPlay : boolean;
-                                      clock$ : Observable<IInitClockTick>;
+                                      clock$ : Observable<IClockTick>;
                                       keySystems : IKeySystemOption[];
                                       mediaElement : HTMLMediaElement;
                                       speed$ : Observable<number>;
@@ -137,9 +137,7 @@ export default function initializeDirectfileContent({
   startAt,
   url,
 } : IDirectFileOptions) : Observable<IDirectfileEvent> {
-
   clearElementSrc(mediaElement);
-
   if (url == null) {
     throw new Error("No URL for a DirectFile content");
   }
@@ -151,8 +149,17 @@ export default function initializeDirectfileContent({
   const initialTime = () => getDirectFileInitialTime(mediaElement, startAt);
   log.debug("Init: Initial time calculated:", initialTime);
 
+  // Create Stalling Manager, an observable which will try to get out of
+  // various infinite stalling issues
+  const initClock$ = createInitClock(mediaElement, clock$, { withMediaSource: false,
+                                                             lowLatencyMode: false });
+
+  // Set the speed set by the user on the media element while pausing a
+  // little longer while the buffer is empty.
+  const playbackRate$ = updatePlaybackRate(mediaElement, initClock$, speed$);
+
   const { seek$, load$ } =
-    seekAndLoadOnMediaEvents(clock$, mediaElement, initialTime, autoPlay);
+    seekAndLoadOnMediaEvents(initClock$, mediaElement, initialTime, autoPlay);
 
   // Create EME Manager, an observable which will manage every EME-related
   // issue.
@@ -165,17 +172,6 @@ export default function initializeDirectfileContent({
   // Translate errors coming from the media element into RxPlayer errors
   // through a throwing Observable.
   const mediaError$ = throwOnMediaError(mediaElement);
-
-  // Set the speed set by the user on the media element while pausing a
-  // little longer while the buffer is empty.
-  const playbackRate$ =
-    updatePlaybackRate(mediaElement, speed$, clock$, { pauseWhenStalled: true })
-      .pipe(map(EVENTS.speedChanged));
-
-  // Create Stalling Manager, an observable which will try to get out of
-  // various infinite stalling issues
-  const stalled$ = getStalledEvents(mediaElement, clock$)
-    .pipe(map(EVENTS.stalled));
 
   // Manage "loaded" event and warn if autoplay is blocked on the current browser
   const loadedEvent$ = emeManager$.pipe(
@@ -199,10 +195,11 @@ export default function initializeDirectfileContent({
 
   const initialSeek$ = seek$.pipe(ignoreElements());
 
+  const stalled$ = initClock$.pipe(map((tick => EVENTS.stalled(tick.stalled))));
   return observableMerge(loadedEvent$,
                          initialSeek$,
                          emeManager$,
                          mediaError$,
-                         playbackRate$,
+                         playbackRate$.pipe(map(EVENTS.speedChanged)),
                          stalled$);
 }

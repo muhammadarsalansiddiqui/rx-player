@@ -37,13 +37,11 @@ import {
   refCount,
   startWith,
 } from "rxjs/operators";
-import config from "../../config";
 import log from "../../log";
 import {
   getLeftSizeOfRange,
   getRange,
 } from "../../utils/ranges";
-import calculateResilientBufferGap from "./calculate_resilient_buffer_gap";
 
 export type IMediaInfosState = "init" | // set once on first emit
                                "canplay" | // HTML5 Event
@@ -55,9 +53,8 @@ export type IMediaInfosState = "init" | // set once on first emit
                                "ratechange" | // HTML5 Event
                                "timeupdate"; // Interval
 
-// Information recuperated on the media element on each clock
-// tick
-interface IMediaInfos {
+// Global information emitted on each clock tick
+export interface IClockTick {
   bufferGap : number; // Gap between `currentTime` and the next position with
                       // bufferred data
   buffered : TimeRanges; // Buffered ranges for the media element
@@ -73,28 +70,6 @@ interface IMediaInfos {
   seeking : boolean; // Current `seeking` value on the mediaElement
   state : IMediaInfosState; } // see type
 
-type stalledStatus = { // set if the player is stalled
-                       reason : "seeking" | // Building buffer after seeking
-                                "not-ready" | // Building buffer after low readyState
-                                "buffering"; // Other cases
-                       timestamp : number; // `performance.now` at the time the
-                                           // stalling happened
-                     } |
-                     null; // the player is not stalled
-
-// Global information emitted on each clock tick
-export interface IClockTick extends IMediaInfos {
-  stalled : stalledStatus; // see type
-}
-
-const { SAMPLING_INTERVAL_MEDIASOURCE,
-        SAMPLING_INTERVAL_LOW_LATENCY,
-        SAMPLING_INTERVAL_NO_MEDIASOURCE,
-        RESUME_GAP_AFTER_SEEKING,
-        RESUME_GAP_AFTER_NOT_ENOUGH_DATA,
-        RESUME_GAP_AFTER_BUFFERING,
-        STALL_GAP } = config;
-
 /**
  * HTMLMediaElement Events for which timings are calculated and emitted.
  * @type {Array.<string>}
@@ -108,58 +83,16 @@ const SCANNED_MEDIA_ELEMENTS_EVENTS : IMediaInfosState[] = [ "canplay",
                                                              "ratechange" ];
 
 /**
- * Returns the amount of time in seconds the buffer should have ahead of the
- * current position before resuming playback. Based on the infos of the stall.
- * Waiting time differs between a "seeking" stall and a buffering stall.
- * @param {Object|null} stalled
- * @param {Boolean} lowLatencyMode
- * @returns {Number}
- */
-function getResumeGap(stalled : stalledStatus, lowLatencyMode : boolean) : number {
-  if (!stalled) {
-    return 0;
-  }
-  const suffix : "LOW_LATENCY" | "DEFAULT" = lowLatencyMode ? "LOW_LATENCY" :
-                                                              "DEFAULT";
-
-  switch (stalled.reason) {
-    case "seeking":
-      return RESUME_GAP_AFTER_SEEKING[suffix];
-    case "not-ready":
-      return RESUME_GAP_AFTER_NOT_ENOUGH_DATA[suffix];
-    default:
-      return RESUME_GAP_AFTER_BUFFERING[suffix];
-  }
-}
-
-/**
- * @param {Object} currentRange
- * @param {Number} duration
- * @param {Boolean} lowLatencyMode
- * @returns {Boolean}
- */
-function hasLoadedUntilTheEnd(
-  currentRange : { start : number; end : number }|null,
-  duration : number,
-  lowLatencyMode : boolean
-) : boolean {
-  const suffix : "LOW_LATENCY" | "DEFAULT" = lowLatencyMode ? "LOW_LATENCY" :
-                                                              "DEFAULT";
-  return currentRange != null &&
-         (duration - currentRange.end) <= STALL_GAP[suffix];
-}
-
-/**
  * Generate a basic timings object from the media element and the eventName
  * which triggered the request.
  * @param {HTMLMediaElement} mediaElement
  * @param {string} currentState
  * @returns {Object}
  */
-function getMediaInfos(
+function getCurrentTick(
   mediaElement : HTMLMediaElement,
   currentState : IMediaInfosState
-) : IMediaInfos {
+) : IClockTick {
   const { buffered,
           currentTime,
           duration,
@@ -183,141 +116,6 @@ function getMediaInfos(
 }
 
 /**
- * Infer stalled status of the media based on:
- *   - the return of the function getMediaInfos
- *   - the previous timings object.
- *
- * @param {Object} prevTimings - Previous timings object. See function to know
- * the different properties needed.
- * @param {Object} currentTimings - Current timings object. This does not need
- * to have every single infos, see function to know which properties are needed.
- * @param {Object} options
- * @returns {Object|null}
- */
-function getStalledStatus(
-  prevTimings : IClockTick,
-  currentTimings : IMediaInfos,
-  { withMediaSource, lowLatencyMode } : IClockOptions
-) : stalledStatus {
-  const { state: currentState,
-          currentTime,
-          buffered,
-          bufferGap,
-          currentRange,
-          duration,
-          paused,
-          readyState,
-          ended } = currentTimings;
-
-  const { stalled: prevStalled,
-          state: prevState,
-          currentTime: prevTime } = prevTimings;
-
-  const fullyLoaded = hasLoadedUntilTheEnd(currentRange, duration, lowLatencyMode);
-
-  const canStall = (readyState >= 1 &&
-                    currentState !== "loadedmetadata" &&
-                    !prevStalled &&
-                    !(fullyLoaded || ended));
-
-  let shouldStall;
-  let shouldUnstall;
-
-  if (withMediaSource) {
-    const stallingBufferGap = lowLatencyMode ? STALL_GAP.LOW_LATENCY :
-                                               STALL_GAP.DEFAULT;
-    if (canStall &&
-        (bufferGap <= stallingBufferGap ||
-         bufferGap === Infinity || readyState === 1)
-    ) {
-      // If very small discontinuities are present in the stream, do not stall
-      const resilientBufferGap = calculateResilientBufferGap(currentTime,
-                                                             bufferGap,
-                                                             buffered);
-      if (resilientBufferGap === Infinity || resilientBufferGap <= stallingBufferGap) {
-        log.debug("Clock: broadcasting stall order", bufferGap, readyState);
-        shouldStall = true;
-      } else {
-        log.debug("Clock: very small discontinuity encountered, not stalling");
-      }
-    } else {
-      if (prevStalled && readyState > 1 && bufferGap < Infinity) {
-        if (fullyLoaded || ended) {
-          log.debug("Clock: Finished content, un-stall", fullyLoaded, ended);
-          shouldUnstall = true;
-        } else {
-          const resumeGapWanted = getResumeGap(prevStalled, lowLatencyMode);
-          if (bufferGap >= resumeGapWanted) {
-            log.debug("Clock: Resume gap wanted reached, un-stall",
-              bufferGap,
-              resumeGapWanted);
-            shouldUnstall = true;
-          } else {
-            // Check that we're not needlessly still rebuffering because of a
-            // very small discontinuity later in the stream
-            const resilientBufferGap = calculateResilientBufferGap(currentTime,
-                                                                   bufferGap,
-                                                                   buffered);
-            if (resilientBufferGap > resumeGapWanted) {
-              log.debug("Clock: Un-stall despite small discontinuities",
-                        currentTime,
-                        currentRange != null ? currentRange.end : null,
-                        resilientBufferGap);
-              shouldUnstall = true;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // when using a direct file, the media will stall and unstall on its
-  // own, so we only try to detect when the media timestamp has not changed
-  // between two consecutive timeupdates
-  else {
-    if (canStall &&
-        (!paused && currentState === "timeupdate" &&
-         prevState === "timeupdate" && currentTime === prevTime ||
-         currentState === "seeking" && bufferGap === Infinity)
-    ) {
-      shouldStall = true;
-    } else if (prevStalled &&
-               (currentState !== "seeking" && currentTime !== prevTime ||
-                currentState === "canplay" ||
-                bufferGap < Infinity &&
-                (bufferGap > getResumeGap(prevStalled, lowLatencyMode) ||
-                 fullyLoaded || ended))
-    ) {
-      shouldUnstall = true;
-    }
-  }
-
-  if (shouldStall) {
-    let reason : "seeking" | "not-ready" | "buffering";
-    if (currentState === "seeking" || currentTimings.seeking) {
-      reason = "seeking";
-    } else if (readyState === 1) {
-      reason = "not-ready";
-    } else {
-      reason = "buffering";
-    }
-    return { reason,
-             timestamp: performance.now() };
-  }
-  else if (shouldUnstall) {
-    return null;
-  }
-  else {
-    return prevStalled;
-  }
-}
-
-export interface IClockOptions {
-  withMediaSource : boolean;
-  lowLatencyMode : boolean;
-}
-
-/**
  * Timings observable.
  *
  * This Observable samples snapshots of player's current state:
@@ -337,46 +135,32 @@ export interface IClockOptions {
  * The sampling is manual instead of based on "timeupdate" to reduce the
  * number of events.
  * @param {HTMLMediaElement} mediaElement
- * @param {Object} options
+ * @param {number} maximumUpdateInterval
  * @returns {Observable}
  */
 function createClock(
   mediaElement : HTMLMediaElement,
-  options : IClockOptions
+  maximumUpdateInterval : number
 ) : Observable<IClockTick> {
   return observableDefer(() : Observable<IClockTick> => {
-    let lastTimings : IClockTick = objectAssign(getMediaInfos(mediaElement, "init"),
+    let lastTimings : IClockTick = objectAssign(getCurrentTick(mediaElement, "init"),
                                                 { stalled: null });
-
-    function getCurrentClockTick(state : IMediaInfosState) : IClockTick {
-      const mediaTimings = getMediaInfos(mediaElement, state);
-      const stalledState = getStalledStatus(lastTimings, mediaTimings, options);
-
-      // /!\ Mutate mediaTimings
-      return objectAssign(mediaTimings, { stalled: stalledState });
-    }
 
     const eventObs : Array< Observable< IMediaInfosState > > =
       SCANNED_MEDIA_ELEMENTS_EVENTS.map((eventName) =>
         observableFromEvent(mediaElement, eventName)
           .pipe(mapTo(eventName)));
 
-    const interval = options.lowLatencyMode  ? SAMPLING_INTERVAL_LOW_LATENCY :
-                     options.withMediaSource ? SAMPLING_INTERVAL_MEDIASOURCE :
-                     SAMPLING_INTERVAL_NO_MEDIASOURCE;
-
     const interval$ : Observable<"timeupdate"> =
-      observableInterval(interval)
-        .pipe(mapTo("timeupdate"));
+      observableInterval(maximumUpdateInterval).pipe(mapTo("timeupdate"));
 
     return observableMerge(interval$, ...eventObs)
       .pipe(
         map((state : IMediaInfosState) => {
-          lastTimings = getCurrentClockTick(state);
+          lastTimings = getCurrentTick(mediaElement, state);
           log.debug("Clock: new clock tick", lastTimings);
           return lastTimings;
         }),
-
         startWith(lastTimings));
   }).pipe(
     multicast(() => new ReplaySubject<IClockTick>(1)), // Always emit the last

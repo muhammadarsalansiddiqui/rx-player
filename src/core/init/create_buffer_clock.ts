@@ -22,6 +22,7 @@ import {
 import {
   ignoreElements,
   map,
+  share,
   tap,
 } from "rxjs/operators";
 import Manifest from "../../manifest";
@@ -64,31 +65,33 @@ export default function createBufferClock(
     ignoreElements());
 
   const clock$ : Observable<IBufferOrchestratorClockTick> =
-    observableCombineLatest([initClock$, speed$])
-      .pipe(map(([tick, speed]) => {
-        const { isLive } = manifest;
-        return {
-          currentTime: tick.currentTime,
-          duration: tick.duration,
-          isPaused: initialPlayPerformed ? tick.paused :
-                                           !autoPlay,
-          isLive,
-          liveGap: isLive ? manifest.getMaximumPosition() - tick.currentTime :
-                            Infinity,
-          readyState: tick.readyState,
-          speed,
-          stalled: tick.stalled,
+    observableCombineLatest([ initClock$, speed$ ])
+      .pipe(
+        map(([tick, speed]) => {
+          const { isLive } = manifest;
+          return {
+            currentTime: tick.currentTime,
+            duration: tick.duration,
+            isPaused: initialPlayPerformed ? tick.paused :
+                                             !autoPlay,
+            isLive,
+            liveGap: isLive ? manifest.getMaximumPosition() - tick.currentTime :
+                              Infinity,
+            readyState: tick.readyState,
+            speed,
+            stalled: tick.stalled,
 
-          // wantedTimeOffset is an offset to add to the timing's current time to have
-          // the "real" wanted position.
-          // For now, this is seen when the media element has not yet seeked to its
-          // initial position, the currentTime will most probably be 0 where the
-          // effective starting position will be _startTime_.
-          // Thus we initially set a wantedTimeOffset equal to startTime.
-          wantedTimeOffset: initialSeekPerformed ? 0 :
-                                                   startTime - tick.currentTime,
-        };
-      }));
+            // wantedTimeOffset is an offset to add to the timing's current time to have
+            // the "real" wanted position.
+            // For now, this is seen when the media element has not yet seeked to its
+            // initial position, the currentTime will most probably be 0 where the
+            // effective starting position will be _startTime_.
+            // Thus we initially set a wantedTimeOffset equal to startTime.
+            wantedTimeOffset: initialSeekPerformed ? 0 :
+                                                     startTime - tick.currentTime,
+          };
+        }),
+        share());
 
   return observableMerge(updateIsPaused$, updateTimeOffset$, clock$);
 }

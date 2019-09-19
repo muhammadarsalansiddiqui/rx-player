@@ -20,9 +20,7 @@ import {
   of as observableOf,
 } from "rxjs";
 import {
-  filter,
   map,
-  pairwise,
   startWith,
   switchMap,
   tap,
@@ -47,36 +45,13 @@ export interface IPlaybackRateOptions { pauseWhenStalled? : boolean; }
  */
 export default function updatePlaybackRate(
   mediaElement : HTMLMediaElement,
-  speed$ : Observable<number>,
   clock$ : Observable<IInitClockTick>,
-  { pauseWhenStalled = true } : IPlaybackRateOptions
+  speed$ : Observable<number>
 ) : Observable<number> {
-  let forcePause$ : Observable<boolean>;
-
-  if (!pauseWhenStalled) {
-    forcePause$ = observableOf(false);
-  } else {
-    const lastTwoTicks$ : Observable<[IInitClockTick, IInitClockTick]> =
-      clock$.pipe(pairwise());
-
-    forcePause$ = lastTwoTicks$
-      .pipe(
-        map(([prevTiming, timing]) => {
-          const isStalled = timing.stalled;
-          const wasStalled = prevTiming.stalled;
-          if (!wasStalled !== !isStalled || // xor
-              (wasStalled && isStalled && wasStalled.reason !== isStalled.reason)
-          ) {
-            return !wasStalled;
-          }
-        }),
-        filter((val : boolean|undefined) : val is boolean => val != null),
-        startWith(false)
-      );
-  }
-
-  return forcePause$
-    .pipe(switchMap(shouldForcePause => {
+  return clock$.pipe(
+    map(tick => tick.stalled !== null),
+    startWith(false),
+    switchMap(shouldForcePause => {
       if (shouldForcePause) {
         return observableDefer(() => {
           log.info("Init: Pause playback to build buffer");

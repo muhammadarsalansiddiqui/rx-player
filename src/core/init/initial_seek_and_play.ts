@@ -59,10 +59,10 @@ function canPlay(
     filter((tick) => {
       const { seeking, stalled, readyState, currentRange } = tick;
       return !seeking &&
-             stalled == null &&
+             stalled === null &&
              (readyState === 4 ||
               readyState === 3 &&
-              currentRange != null) &&
+              currentRange !== null) &&
              (!shouldValidateMetadata() ||
               mediaElement.duration > 0);
     }),

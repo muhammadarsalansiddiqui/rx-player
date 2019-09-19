@@ -18,10 +18,7 @@ import config from "../../config";
 
 const { FORCED_ENDED_THRESHOLD } = config;
 
-/**
- * Player state dictionnary
- * @type {Object}
- */
+// Player state dictionnary
 export const PLAYER_STATES = { STOPPED: "STOPPED",
                                LOADED: "LOADED",
                                LOADING: "LOADING",
@@ -44,9 +41,7 @@ export const PLAYER_STATES = { STOPPED: "STOPPED",
 export default function getLoadedContentState(
   mediaElement : HTMLMediaElement,
   isPlaying : boolean,
-  stalledStatus : { reason : "seeking" |
-                             "not-ready" |
-                             "buffering"; } |
+  stalledStatus : { reason : "seeking" | "not-ready" | "buffering" } |
                   null
 ) : string {
   if (mediaElement.ended) {

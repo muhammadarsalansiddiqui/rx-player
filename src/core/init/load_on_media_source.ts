@@ -47,7 +47,6 @@ import createBufferClock from "./create_buffer_clock";
 import { setDurationToMediaSource } from "./create_media_source";
 import { maintainEndOfStream } from "./end_of_stream";
 import EVENTS from "./events_generators";
-import getStalledEvents from "./get_stalled_events";
 import seekAndLoadOnMediaEvents from "./initial_seek_and_play";
 import {
   IInitClockTick,
@@ -60,15 +59,7 @@ import updatePlaybackRate from "./update_playback_rate";
 
 // Arguments needed by createMediaSourceLoader
 export interface IMediaSourceLoaderArguments {
-  mediaElement : HTMLMediaElement; // Media Element on which the content will be
-                                   // played
-  manifest : Manifest; // Manifest of the content we want to
-                                         // play
-  clock$ : Observable<IInitClockTick>; // Emit position information
-  speed$ : Observable<number>; // Emit the speed.
-                               // /!\ Should replay the last value on subscription.
   abrManager : ABRManager;
-  segmentPipelinesManager : SegmentPipelinesManager<any>;
   bufferOptions : { // Buffers-related options
     wantedBufferAhead$ : BehaviorSubject<number>;
     maxBufferAhead$ : Observable<number>;
@@ -76,6 +67,14 @@ export interface IMediaSourceLoaderArguments {
     textTrackOptions : ITextTrackSourceBufferOptions;
     manualBitrateSwitchingMode : "seamless"|"direct";
   };
+  clock$ : Observable<IInitClockTick>; // Emit position information
+  manifest : Manifest; // Manifest of the content we want to
+                                         // play
+  mediaElement : HTMLMediaElement; // Media Element on which the content will be
+                                   // played
+  segmentPipelinesManager : SegmentPipelinesManager<any>;
+  speed$ : Observable<number>; // Emit the speed.
+                               // /!\ Should replay the last value on subscription.
 }
 
 // Events emitted when loading content in the MediaSource
@@ -92,13 +91,13 @@ export type IMediaSourceLoaderEvent = IStalledEvent |
  * @returns {Observable}
  */
 export default function createMediaSourceLoader({
-  mediaElement,
-  manifest,
-  clock$,
-  speed$,
-  bufferOptions,
   abrManager,
+  bufferOptions,
+  clock$,
+  manifest,
+  mediaElement,
   segmentPipelinesManager,
+  speed$,
 } : IMediaSourceLoaderArguments) : (
   mediaSource : MediaSource,
   position : number,
@@ -189,14 +188,9 @@ export default function createMediaSourceLoader({
 
     // update the speed set by the user on the media element while pausing a
     // little longer while the buffer is empty.
-    const playbackRate$ =
-      updatePlaybackRate(mediaElement, speed$, clock$, { pauseWhenStalled: true })
-        .pipe(map(EVENTS.speedChanged));
-
-    // Create Stalling Manager, an observable which will try to get out of
-    // various infinite stalling issues
-    const stalled$ = getStalledEvents(mediaElement, clock$)
-      .pipe(map(EVENTS.stalled));
+    const playbackRate$ = updatePlaybackRate(mediaElement, clock$, speed$)
+      .pipe(map(EVENTS.speedChanged));
+    const stalled$ = clock$.pipe(map((tick => EVENTS.stalled(tick.stalled))));
 
     const loadedEvent$ = load$
       .pipe(mergeMap((evt) => {

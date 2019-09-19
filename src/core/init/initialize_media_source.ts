@@ -64,6 +64,7 @@ import { ITextTrackSourceBufferOptions } from "../source_buffers";
 import createEMEManager, {
   IEMEDisabledEvent,
 } from "./create_eme_manager";
+import createInitClock from "./create_init_clock";
 import openMediaSource from "./create_media_source";
 import EVENTS from "./events_generators";
 import getInitialTime, {
@@ -76,7 +77,7 @@ import createMediaSourceLoader, {
 import refreshManifest from "./refresh_manifest";
 import throwOnMediaError from "./throw_on_media_error";
 import {
-  IInitClockTick,
+  IClockTick,
   IManifestReadyEvent,
   IReloadingMediaSourceEvent,
   IWarningEvent,
@@ -92,7 +93,7 @@ export interface IInitializeOptions {
                     maxBufferAhead$ : Observable<number>;
                     maxBufferBehind$ : Observable<number>;
                     manualBitrateSwitchingMode : "seamless" | "direct"; };
-  clock$ : Observable<IInitClockTick>;
+  clock$ : Observable<IClockTick>;
   keySystems : IKeySystemOption[];
   lowLatencyMode : boolean;
   mediaElement : HTMLMediaElement;
@@ -195,6 +196,10 @@ export default function InitializeOnMediaSource(
   // through a throwing Observable.
   const mediaError$ = throwOnMediaError(mediaElement);
 
+  // Emit "stalled" event when buffering
+  const initClock$ = createInitClock(mediaElement, clock$, { lowLatencyMode,
+                                                             withMediaSource: true });
+
   const loadContent$ = observableCombineLatest([
     openMediaSource$,
     fetchManifest(url, undefined),
@@ -206,13 +211,13 @@ export default function InitializeOnMediaSource(
     log.debug("Init: Initial time calculated:", initialTime);
 
     const mediaSourceLoader = createMediaSourceLoader({
-      mediaElement,
-      manifest,
-      clock$,
-      speed$,
       abrManager,
-      segmentPipelinesManager,
       bufferOptions: objectAssign({ textTrackOptions }, bufferOptions),
+      clock$: initClock$,
+      manifest,
+      mediaElement,
+      segmentPipelinesManager,
+      speed$,
     });
 
     const recursiveLoad$ = recursivelyLoadOnMediaSource(initialMediaSource,

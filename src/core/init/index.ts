@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { IStallingItem } from "./get_stalled_events";
 import InitializeOnMediaSource, {
   IInitEvent,
   IInitializeOptions,
@@ -25,5 +24,4 @@ export default InitializeOnMediaSource;
 export {
   IInitEvent,
   IInitializeOptions,
-  IStallingItem,
 };

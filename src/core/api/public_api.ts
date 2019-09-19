@@ -120,7 +120,10 @@ import TrackManager, {
   ITMVideoTrackListItem
 } from "./track_manager";
 
-const { DEFAULT_UNMUTED_VOLUME } = config;
+const { DEFAULT_UNMUTED_VOLUME,
+        SAMPLING_INTERVAL_MEDIASOURCE,
+        SAMPLING_INTERVAL_LOW_LATENCY,
+        SAMPLING_INTERVAL_NO_MEDIASOURCE } = config;
 
 const { isActive,
         isVideoVisible,
@@ -707,8 +710,10 @@ class Player extends EventEmitter<IPublicAPIEvent> {
     const videoElement = this.videoElement;
 
     // Global clock used for the whole application.
-    const clock$ = createClock(videoElement, { withMediaSource: !isDirectFile,
-                                               lowLatencyMode });
+    const clockInterval = lowLatencyMode  ? SAMPLING_INTERVAL_LOW_LATENCY :
+                          !isDirectFile   ? SAMPLING_INTERVAL_MEDIASOURCE :
+                                            SAMPLING_INTERVAL_NO_MEDIASOURCE;
+    const clock$ = createClock(videoElement, clockInterval);
 
     const contentIsStopped$ = observableMerge(
       this._priv_stopCurrentContent$,

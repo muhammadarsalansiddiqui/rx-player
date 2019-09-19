@@ -17,26 +17,33 @@
 import { ICustomError } from "../../errors";
 import Manifest from "../../manifest";
 import { IRepresentationChangeEvent } from "../buffers";
-import { IStallingItem } from "./get_stalled_events";
 
 // Object emitted when the clock ticks
-export interface IInitClockTick { currentTime : number;
-                                  buffered : TimeRanges;
-                                  duration : number;
-                                  bufferGap : number;
-                                  state : string;
-                                  playbackRate : number;
-                                  currentRange : { start : number;
-                                                   end : number; } |
-                                                 null;
-                                  readyState : number;
-                                  paused : boolean;
-                                  stalled : { reason : "seeking" |
-                                                       "not-ready" |
-                                                       "buffering";
-                                              timestamp : number; } |
-                                            null;
-                                  seeking : boolean; }
+export interface IClockTick { currentTime : number;
+                              bufferGap : number;
+                              buffered : TimeRanges;
+                              currentRange : { start : number;
+                                               end : number; } |
+                                             null;
+                              duration : number;
+                              ended : boolean;
+                              paused : boolean;
+                              playbackRate : number;
+                              readyState : number;
+                              seeking : boolean;
+                              state : string; }
+
+export interface IStallingItem {
+  reason : "seeking" | // Building buffer after seeking
+           "not-ready" | // Building buffer after low readyState
+           "buffering"; // Other cases
+  timestamp : number; // `performance.now` at the time the
+                      // stalling happened
+}
+
+export interface IInitClockTick extends IClockTick {
+  stalled : IStallingItem | null;
+}
 
 // The manifest has been downloaded and parsed for the first time
 export interface IManifestReadyEvent { type : "manifestReady";

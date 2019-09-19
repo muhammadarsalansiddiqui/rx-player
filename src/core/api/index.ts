@@ -15,6 +15,7 @@
  */
 
 import Player from "./public_api";
+export { IClockTick } from "./clock";
 export {
   IConstructorOptions,
   ILoadVideoOptions,
