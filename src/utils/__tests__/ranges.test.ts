@@ -18,6 +18,7 @@ import {
   convertToRanges,
   getInnerAndOuterTimeRanges,
   getLeftSizeOfRange,
+  getNextRange,
   getNextRangeGap,
   getPlayedSizeOfRange,
   getRange,
@@ -318,6 +319,52 @@ describe("utils - ranges", () => {
       ]);
       expect(getNextRangeGap(timeRanges, Infinity)).toBe(Infinity);
       expect(getNextRangeGap(timeRanges, 70)).toBe(Infinity);
+    });
+  });
+
+  describe("getNextRange", () => {
+    /* tslint:disable max-line-length */
+    it("should return the next range if the given number is not in any range", () => {
+    /* tslint:enable max-line-length */
+      const timeRanges = constructTimeRanges([
+        [0, 10],
+        [20, 30],
+        [50, 70],
+      ]);
+      expect(getNextRange(timeRanges, 15.6)).toEqual({ start: 20, end: 30 });
+      expect(getNextRange(timeRanges, 30)).toEqual({ start: 50, end: 70 });
+    });
+
+    /* tslint:disable max-line-length */
+    it("should return next range if the given number is in a range", () => {
+    /* tslint:enable max-line-length */
+      const timeRanges = constructTimeRanges([
+        [0, 10],
+        [20, 30],
+        [50, 70],
+      ]);
+      expect(getNextRange(timeRanges, 0)).toEqual({ start: 20, end: 30 });
+      expect(getNextRange(timeRanges, 20.5)).toEqual({ start: 50, end: 70 });
+    });
+
+    it("should return null when we are in the last time range", () => {
+      const timeRanges = constructTimeRanges([
+        [0, 10],
+        [20, 30],
+        [50, 70],
+      ]);
+      expect(getNextRange(timeRanges, 50)).toEqual(null);
+      expect(getNextRange(timeRanges, 58.5)).toEqual(null);
+    });
+
+    it("should return Infinity when we are after the last time range", () => {
+      const timeRanges = constructTimeRanges([
+        [0, 10],
+        [20, 30],
+        [50, 70],
+      ]);
+      expect(getNextRange(timeRanges, Infinity)).toEqual(null);
+      expect(getNextRange(timeRanges, 70)).toEqual(null);
     });
   });
 

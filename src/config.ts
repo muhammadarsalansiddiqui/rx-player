@@ -223,11 +223,20 @@ export default {
   },
 
   /**
+   * Discontinuity of an amount of time less or equal to that value in seconds
+   * will be ignored when considering whether the player should stall.
+   * It is important to ensure that that value is under SKIPPABLE_DISCONTINUITY,
+   * as we will want to just skip those.
+   * @type {number}
+   */
+  IGNORABLE_DISCONTINUITY: 0.15,
+
+  /**
    * Maximum time, in seconds, the player should automatically skip when stalled
    * because of a discontinuity in the downloaded range.
    * @type {Number}
    */
-  DISCONTINUITY_THRESHOLD: 1,
+  SKIPPABLE_DISCONTINUITY: 1,
 
   /**
    * Ratio used to know if an already loaded segment should be re-buffered.

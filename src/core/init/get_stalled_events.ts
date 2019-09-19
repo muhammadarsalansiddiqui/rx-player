@@ -27,7 +27,7 @@ import log from "../../log";
 import { getNextRangeGap } from "../../utils/ranges";
 import { IInitClockTick } from "./types";
 
-const { DISCONTINUITY_THRESHOLD } = config;
+const { SKIPPABLE_DISCONTINUITY } = config;
 
 export interface IStallingItem {
   reason : "seeking" | "not-ready" | "buffering";
@@ -69,7 +69,7 @@ export default function getStalledEvents(
       ) {
         log.warn("Init: After freeze seek", currentTime, tick.currentRange);
         mediaElement.currentTime = currentTime;
-      } else if (nextRangeGap < DISCONTINUITY_THRESHOLD) {
+      } else if (nextRangeGap < SKIPPABLE_DISCONTINUITY) {
         const seekTo = (currentTime + nextRangeGap + 1 / 60);
         log.warn("Init: Discontinuity seek", currentTime, nextRangeGap, seekTo);
         mediaElement.currentTime = seekTo;

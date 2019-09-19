@@ -43,6 +43,7 @@ import {
   getLeftSizeOfRange,
   getRange,
 } from "../../utils/ranges";
+import calculateResilientBufferGap from "./calculate_resilient_buffer_gap";
 
 export type IMediaInfosState = "init" | // set once on first emit
                                "canplay" | // HTML5 Event
@@ -200,6 +201,7 @@ function getStalledStatus(
 ) : stalledStatus {
   const { state: currentState,
           currentTime,
+          buffered,
           bufferGap,
           currentRange,
           duration,
@@ -222,18 +224,50 @@ function getStalledStatus(
   let shouldUnstall;
 
   if (withMediaSource) {
+    const stallingBufferGap = lowLatencyMode ? STALL_GAP.LOW_LATENCY :
+                                               STALL_GAP.DEFAULT;
     if (canStall &&
-        (bufferGap <= (lowLatencyMode ? STALL_GAP.LOW_LATENCY : STALL_GAP.DEFAULT) ||
+        (bufferGap <= stallingBufferGap ||
          bufferGap === Infinity || readyState === 1)
     ) {
-      shouldStall = true;
-    } else if (prevStalled &&
-               readyState > 1 &&
-               bufferGap < Infinity &&
-               (bufferGap > getResumeGap(prevStalled, lowLatencyMode) ||
-                fullyLoaded || ended)
-    ) {
-      shouldUnstall = true;
+      // If very small discontinuities are present in the stream, do not stall
+      const resilientBufferGap = calculateResilientBufferGap(currentTime,
+                                                             bufferGap,
+                                                             buffered);
+      if (resilientBufferGap === Infinity || resilientBufferGap <= stallingBufferGap) {
+        log.debug("Clock: broadcasting stall order", bufferGap, readyState);
+        shouldStall = true;
+      } else {
+        log.debug("Clock: very small discontinuity encountered, not stalling");
+      }
+    } else {
+      if (prevStalled && readyState > 1 && bufferGap < Infinity) {
+        if (fullyLoaded || ended) {
+          log.debug("Clock: Finished content, un-stall", fullyLoaded, ended);
+          shouldUnstall = true;
+        } else {
+          const resumeGapWanted = getResumeGap(prevStalled, lowLatencyMode);
+          if (bufferGap >= resumeGapWanted) {
+            log.debug("Clock: Resume gap wanted reached, un-stall",
+              bufferGap,
+              resumeGapWanted);
+            shouldUnstall = true;
+          } else {
+            // Check that we're not needlessly still rebuffering because of a
+            // very small discontinuity later in the stream
+            const resilientBufferGap = calculateResilientBufferGap(currentTime,
+                                                                   bufferGap,
+                                                                   buffered);
+            if (resilientBufferGap > resumeGapWanted) {
+              log.debug("Clock: Un-stall despite small discontinuities",
+                        currentTime,
+                        currentRange != null ? currentRange.end : null,
+                        resilientBufferGap);
+              shouldUnstall = true;
+            }
+          }
+        }
+      }
     }
   }
 
@@ -339,7 +373,7 @@ function createClock(
       .pipe(
         map((state : IMediaInfosState) => {
           lastTimings = getCurrentClockTick(state);
-          log.debug("API: new clock tick", lastTimings);
+          log.debug("Clock: new clock tick", lastTimings);
           return lastTimings;
         }),
 

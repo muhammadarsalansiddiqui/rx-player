@@ -198,6 +198,24 @@ function getNextRangeGap(timeRanges : TimeRanges, time : number) : number {
 }
 
 /**
+ * Get start and end of the range which starts after the given time.
+ * `null` if not found.
+ * @param {TimeRanges} timeRanges
+ * @param {Number} time
+ * @returns {Object}
+ */
+function getNextRange(timeRanges : TimeRanges, time : number) : IRange|null {
+  const len = timeRanges.length;
+  for (let i = 0; i < len; i++) {
+    const start = timeRanges.start(i);
+    if (time < start) {
+      return { start, end: timeRanges.end(i) };
+    }
+  }
+  return null;
+}
+
+/**
  * @param {TimeRanges} timeRanges
  * @param {Number} time
  * @returns {Object} - Object with two properties:
@@ -381,6 +399,7 @@ export {
   getInnerAndOuterTimeRanges,
   getLeftSizeOfRange,
   getNextRangeGap,
+  getNextRange,
   getPlayedSizeOfRange,
   getRange,
   getSizeOfRange,
