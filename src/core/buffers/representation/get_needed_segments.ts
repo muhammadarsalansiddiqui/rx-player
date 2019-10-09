@@ -249,7 +249,9 @@ function getCorrespondingBufferedSegments(
   for (let i = segmentInventory.length - 1; i >= 0; i--) {
     const eltInventory = segmentInventory[i];
 
-    if (!eltInventory.partiallyPushed) {
+    if (!eltInventory.partiallyPushed &&
+        eltInventory.infos.representation.decipherable !== false)
+    {
       const inventorySegment = eltInventory.infos.segment;
       const eltInventoryStart = inventorySegment.time /
                                 inventorySegment.timescale;
