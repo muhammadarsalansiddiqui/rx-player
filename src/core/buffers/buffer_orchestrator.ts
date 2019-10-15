@@ -284,10 +284,6 @@ export default function BufferOrchestrator(
           return EMPTY; // no need to stop the current buffers
         }
         const rangesToClean = getBlacklistedRanges(queuedSourceBuffer, updates);
-        if (rangesToClean.length === 0) {
-          return EMPTY;
-        }
-
         enableOutOfBoundsCheck = false;
         destroyBuffers$.next();
         return observableConcat(
