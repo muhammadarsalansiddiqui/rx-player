@@ -57,7 +57,6 @@ import SourceBuffersStore, {
 import ActivePeriodEmitter from "./active_period_emitter";
 import areBuffersComplete from "./are_buffers_complete";
 import EVENTS from "./events_generators";
-import getBlacklistedRanges from "./get_blacklisted_ranges";
 import PeriodBuffer, {
   IPeriodBufferClockTick,
 } from "./period";
@@ -283,21 +282,12 @@ export default function BufferOrchestrator(
         if (!hasType || queuedSourceBuffer == null) {
           return EMPTY; // no need to stop the current buffers
         }
-        const rangesToClean = getBlacklistedRanges(queuedSourceBuffer, updates);
-        enableOutOfBoundsCheck = false;
-        destroyBuffers$.next();
-        return observableConcat(
-          ...rangesToClean.map(({ start, end }) =>
-            queuedSourceBuffer.removeBuffer(start, end).pipe(ignoreElements())),
-          clock$.pipe(take(1), mergeMap((lastTick) => {
-            const lastPosition = lastTick.currentTime + lastTick.wantedTimeOffset;
-            const newInitialPeriod = manifest.getPeriodForTime(lastPosition);
-            if (newInitialPeriod == null) {
-              throw new MediaError("MEDIA_TIME_NOT_FOUND",
-                                   "The wanted position is not found in the Manifest.");
-            }
-            return launchConsecutiveBuffersForPeriod(newInitialPeriod);
-          })));
+        return clock$.pipe(take(1), map((lastTick) => {
+          return EVENTS.needsMediaSourceReload({
+            currentTime: lastTick.currentTime + lastTick.wantedTimeOffset,
+            isPaused: lastTick.isPaused,
+          });
+        }));
       }));
 
     return observableMerge(restartBuffersWhenOutOfBounds$,
