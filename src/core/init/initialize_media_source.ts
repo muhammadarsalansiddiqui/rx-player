@@ -209,8 +209,7 @@ export default function InitializeOnMediaSource(
         manifest.markUndecipherableKIDs(evt.value);
       } else if (evt.type === "blacklist-protection-data") {
         log.info("Init: blacklisting based on protection data.");
-        const { type, data } = evt.value;
-        manifest.markUndecipherableProtectionData(type, data);
+        manifest.markUndecipherableProtectionData(evt.value.data);
       }
     }));
 
