@@ -31,6 +31,7 @@ import {
   finalize,
   ignoreElements,
   map,
+  mapTo,
   mergeMap,
   share,
   startWith,
@@ -45,6 +46,7 @@ import { ICustomError } from "../../errors";
 import log from "../../log";
 import Manifest from "../../manifest";
 import { ITransportPipelines } from "../../transports";
+import { fromEvent } from "../../utils/event_emitter";
 import throttle from "../../utils/rx-throttle";
 import ABRManager, {
   IABRManagerArguments,
@@ -75,8 +77,10 @@ import createMediaSourceLoader, {
 import refreshManifest from "./refresh_manifest";
 import throwOnMediaError from "./throw_on_media_error";
 import {
+  IDecipherabilityUpdateEvent,
   IInitClockTick,
   IManifestReadyEvent,
+  IManifestUpdateEvent,
   IReloadingMediaSourceEvent,
   IWarningEvent,
 } from "./types";
@@ -107,10 +111,12 @@ export interface IInitializeOptions {
 
 // Every events emitted by Init.
 export type IInitEvent = IManifestReadyEvent |
+                         IManifestUpdateEvent |
                          IMediaSourceLoaderEvent |
                          IEMEManagerEvent |
                          IEMEDisabledEvent |
                          IReloadingMediaSourceEvent |
+                         IDecipherabilityUpdateEvent |
                          IWarningEvent;
 
 /**
@@ -143,14 +149,14 @@ export default function InitializeOnMediaSource(
     pipelines,
     url } : IInitializeOptions
 ) : Observable<IInitEvent> {
-  const warning$ = new Subject<ICustomError>();
+  const { offlineRetry, segmentRetry, manifestRetry } = networkConfig;
 
-  const manifestPipelines =
-    createManifestPipeline(pipelines,
-                           { lowLatencyMode,
-                             manifestRetry: networkConfig.manifestRetry,
-                             offlineRetry: networkConfig.offlineRetry },
-                           warning$);
+  const warning$ = new Subject<ICustomError>();
+  const manifestPipelines = createManifestPipeline(pipelines,
+                                                   { lowLatencyMode,
+                                                     manifestRetry,
+                                                     offlineRetry },
+                                                   warning$);
 
   // Fetch and parse the manifest from the URL given.
   // Throttled to avoid doing multiple simultaneous requests.
@@ -162,17 +168,15 @@ export default function InitializeOnMediaSource(
         mergeMap((response) =>
           manifestPipelines.parse(response.value, manifestURL, externalClockOffset)
         ),
-        share()
-      );
+        share());
     }
   );
 
   // Creates pipelines for downloading segments.
-  const segmentPipelinesManager = new SegmentPipelinesManager<any>(pipelines, {
-    lowLatencyMode,
-    offlineRetry: networkConfig.offlineRetry,
-    segmentRetry: networkConfig.segmentRetry,
-  });
+  const segmentPipelinesManager =
+    new SegmentPipelinesManager<any>(pipelines, { lowLatencyMode,
+                                                  offlineRetry,
+                                                  segmentRetry });
 
   // Create ABR Manager, which will choose the right "Representation" for a
   // given "Adaptation".
@@ -181,7 +185,7 @@ export default function InitializeOnMediaSource(
   // Create and open a new MediaSource object on the given media element.
   const openMediaSource$ = openMediaSource(mediaElement).pipe(
     subscribeOn(asapScheduler), // to launch subscriptions only when all
-    share());                 // Observables here are linked
+    share());                   // Observables here are linked
 
   // Send content protection data to EMEManager
   const protectedSegments$ = new Subject<IContentProtection>();
@@ -274,12 +278,20 @@ export default function InitializeOnMediaSource(
                 ignoreElements());
       }));
 
-    return observableMerge(blacklistUpdates$, manifestRefresh$, recursiveLoad$).pipe(
-      startWith(EVENTS.manifestReady(manifest)),
-      finalize(() => {
-        manifestRefreshed$.complete();
-        scheduleManifestRefresh$.complete();
-      }));
+    const manifestEvents$ = observableMerge(
+      fromEvent(manifest, "manifestUpdate").pipe(mapTo(EVENTS.manifestUpdate())),
+      fromEvent(manifest, "decipherabilityUpdate")
+        .pipe(map(EVENTS.decipherabilityUpdate)));
+
+    return observableMerge(blacklistUpdates$,
+                           manifestRefresh$,
+                           manifestEvents$,
+                           recursiveLoad$)
+              .pipe(startWith(EVENTS.manifestReady(manifest)),
+                    finalize(() => {
+                      manifestRefreshed$.complete();
+                      scheduleManifestRefresh$.complete();
+                    }));
 
     /**
      * Load the content defined by the Manifest in the mediaSource given at the
