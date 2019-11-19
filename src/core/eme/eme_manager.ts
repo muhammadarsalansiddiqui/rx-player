@@ -104,7 +104,9 @@ export default function EMEManager(
         return EMPTY;
       }
       return observableOf({ type: initDataType, data: initData });
-    }));
+    }),
+    shareReplay({ refCount: true })); // multiple Observables listen to that one
+                                      // as soon as the EMEManager is subscribed
 
   const externalEvents$ = contentProtections$.pipe(
     tap((evt) => { log.debug("EME: Encrypted event received from Player", evt); }));
@@ -141,7 +143,8 @@ export default function EMEManager(
 
       if (handledInitData.get(initDataType, initData) === true) {
         log.debug("EME: Init data already received. Skipping it.");
-        return EMPTY; // Already handled, quit
+        return observableOf({ type: "init-data-already-handled" as const,
+                              value: { type: initDataType, data: initData } });
       }
       handledInitData.set(initDataType, initData, true);
 
@@ -170,11 +173,12 @@ export default function EMEManager(
 
     /* Trigger license request and manage MediaKeySession events */
     mergeMap((sessionInfosEvt) =>  {
-      if (sessionInfosEvt.type === "warning" ||
-          sessionInfosEvt.type === "blacklist-protection-data") {
-        return observableOf(sessionInfosEvt);
+      switch (sessionInfosEvt.type) {
+        case "warning":
+        case "blacklist-protection-data":
+        case "init-data-already-handled":
+          return observableOf(sessionInfosEvt);
       }
-
       const { initData,
               initDataType,
               mediaKeySession,
@@ -223,5 +227,9 @@ export default function EMEManager(
         }));
     }));
 
-  return observableMerge(mediaKeysInfos$, bindSession$);
+  return observableMerge(mediaKeysInfos$,
+                         mediaEncryptedEvents$
+                           .pipe(map(evt => ({ type: "encrypted-event-received" as const,
+                                               value: evt }))),
+                         bindSession$);
 }
