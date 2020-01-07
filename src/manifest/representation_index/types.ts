@@ -48,6 +48,7 @@ export interface IMetaPlaylistPrivateInfos { transportType : string;
 export interface IPrivateInfos {
   smoothInit? : ISmoothInitSegmentPrivateInfos;
   metaplaylistInfos? : IMetaPlaylistPrivateInfos;
+  indexOnly?: boolean;
 }
 
 // ISegment Object.
@@ -86,6 +87,12 @@ export default interface IRepresentationIndex {
    * @returns {Object}
    */
   getInitSegment() : ISegment|null;
+
+  /**
+   * Returns Segment object allowing to do the index Segment request.
+   * @returns {Object}
+   */
+  getIndexSegment() : ISegment|null;
 
   /**
    * Returns an array of Segments needed for the amount of time given.

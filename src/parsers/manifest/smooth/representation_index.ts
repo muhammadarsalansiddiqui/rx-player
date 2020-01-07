@@ -250,6 +250,14 @@ export default class SmoothRepresentationIndex implements IRepresentationIndex {
   }
 
   /**
+   * Returns no index segment
+   * @returns {null}
+   */
+  getIndexSegment() : null {
+    return null;
+  }
+
+  /**
    * Generate a list of Segments for a particular period of time.
    *
    * @param {Number} _up
