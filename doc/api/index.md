@@ -1044,8 +1044,12 @@ Each of the objects in the returned array have the following properties:
     language.
 
 
-In _DirectFile_ mode (see [loadVideo
-options](./loadVideo_options.md#prop-transport)), returns an empty Array.
+In _DirectFile_ mode
+(see [loadVideo options](./loadVideo_options.md#prop-transport)) :
+- If track managing API (``mediaElement.audioTracks``) is supported on the browser
+  and media file tracks are handled by the browser :
+  returns an array of objects that have same properties than in media source mode.
+- If no streaming file or no track managing API : returns an empty Array.
 
 
 <a name="meth-getAvailableTextTracks"></a>
@@ -1076,8 +1080,12 @@ Each of the objects in the returned array have the following properties:
     not.
 
 
-In _DirectFile_ mode (see [loadVideo
-options](./loadVideo_options.md#prop-transport)), returns an empty Array.
+In _DirectFile_ mode
+(see [loadVideo options](./loadVideo_options.md#prop-transport)) :
+- If track managing API (``mediaElement.textTracks``) is supported on the browser
+  and media file tracks are handled by the browser :
+  returns an array of objects that have same properties than in media source mode.
+- If no streaming file or no track managing API : returns an empty Array.
 
 
 <a name="meth-getAvailableVideoTracks"></a>
@@ -1114,8 +1122,12 @@ Each of the objects in the returned array have the following properties:
     - ``frameRate`` (``string|undefined``): The video framerate.
 
 
-In _DirectFile_ mode (see [loadVideo
-options](./loadVideo_options.md#prop-transport)), returns an empty Array.
+In _DirectFile_ mode
+(see [loadVideo options](./loadVideo_options.md#prop-transport)) :
+- If track managing API (``mediaElement.videoTracks``) is supported on the browser
+  and media file tracks are handled by the browser :
+  returns an array of objects that have same properties than in media source mode.
+- If no streaming file or no track managing API : returns an empty Array.
 
 
 <a name="meth-getAudioTrack"></a>
@@ -1155,6 +1167,12 @@ The track is an object with the following properties:
 ``undefined`` in _DirectFile_ mode (see [loadVideo
 options](./loadVideo_options.md#prop-transport)).
 
+In _DirectFile_ mode
+(see [loadVideo options](./loadVideo_options.md#prop-transport)) :
+- If track managing API (``mediaElement.audioTracks``) is supported on the browser
+  and media file tracks are handled by the browser :
+  returns an object that has same properties than in media source mode.
+- If no streaming file or no track managing API : ``undefined``.
 
 <a name="meth-getTextTrack"></a>
 ### getTextTrack ###############################################################
@@ -1184,8 +1202,12 @@ The track is an object with the following properties:
 
 ``undefined`` if no content has been loaded yet.
 
-``undefined`` in _DirectFile_ mode (see [loadVideo
-options](./loadVideo_options.md#prop-transport)).
+In _DirectFile_ mode
+(see [loadVideo options](./loadVideo_options.md#prop-transport)) :
+- If track managing API (``mediaElement.textTracks``) is supported on the browser
+  and media file tracks are handled by the browser :
+  returns an object that has same properties than in media source mode.
+- If no streaming file or no track managing API : ``undefined``.
 
 
 <a name="meth-getVideoTrack"></a>
@@ -1222,8 +1244,12 @@ The track is an object with the following properties:
 
 ``undefined`` if no content has been loaded yet.
 
-``undefined`` in _DirectFile_ mode (see [loadVideo
-options](./loadVideo_options.md#prop-transport)).
+In _DirectFile_ mode
+(see [loadVideo options](./loadVideo_options.md#prop-transport)) :
+- If track managing API (``mediaElement.videoTracks``) is supported on the browser
+  and media file tracks are handled by the browser :
+  returns an object that has same properties than in media source mode.
+- If no streaming file or no track managing API : ``undefined``.
 
 
 <a name="meth-setAudioTrack"></a>
@@ -1235,8 +1261,17 @@ Set a new audio track from its id, recuperated from ``getAvailableAudioTracks``.
 
 ---
 
-:warning: This option will have no effect for contents loaded in _DirectFile_
-mode (see [loadVideo options](./loadVideo_options.md#prop-transport)).
+:warning: This option will have no effect in _DirectFile_ mode
+(see [loadVideo options](./loadVideo_options.md#prop-transport)) when either :
+- No audio track API was supported on current browser
+- The media file tracks are not supported on browser
+
+:warning: If used on Safari, in _DirectFile_ mode, track change may change track on other
+track type (e.g. changing video track may change subtitle track too).
+This has two potential reasons :
+- The HLS defines variants, groups of tracks that may be read together
+- Safari may decide to enable a track for accessibility or user language convenience
+  (e.g. Safari may switch subtitle to your OS language if you pick another audio language)
 
 ---
 
@@ -1250,8 +1285,17 @@ Set a new text track from its id, recuperated from ``getAvailableTextTracks``.
 
 ---
 
-:warning: This option will have no effect for contents loaded in _DirectFile_
-mode (see [loadVideo options](./loadVideo_options.md#prop-transport)).
+:warning: This option will have no effect in _DirectFile_ mode
+(see [loadVideo options](./loadVideo_options.md#prop-transport)) when either :
+- No audio track API was supported on current browser
+- The media file tracks are not supported on browser
+
+:warning: If used on Safari, in _DirectFile_ mode, track change may change track on other
+track type (e.g. changing video track may change subtitle track too).
+This has two potential reasons :
+- The HLS defines variants, groups of tracks that may be read together
+- Safari may decide to enable a track for accessibility or user language convenience
+  (e.g. Safari may switch subtitle to your OS language if you pick another audio language)
 
 ---
 
@@ -1263,8 +1307,10 @@ Deactivate the current text track, if one.
 
 ---
 
-:warning: This option will have no effect for contents loaded in _DirectFile_
-mode (see [loadVideo options](./loadVideo_options.md#prop-transport)).
+:warning: This option will have no effect in _DirectFile_ mode
+(see [loadVideo options](./loadVideo_options.md#prop-transport)) when either :
+- No audio track API was supported on current browser
+- The media file tracks are not supported on browser
 
 ---
 
@@ -1299,8 +1345,17 @@ During this period of time:
 
 ---
 
-:warning: This option will have no effect for contents loaded in _DirectFile_
-mode (see [loadVideo options](./loadVideo_options.md#prop-transport)).
+:warning: This option will have no effect in _DirectFile_ mode
+(see [loadVideo options](./loadVideo_options.md#prop-transport)) when either :
+- No audio track API was supported on current browser
+- The media file tracks are not supported on browser
+
+:warning: If used on Safari, in _DirectFile_ mode, track change may change track on other
+track type (e.g. changing video track may change subtitle track too).
+This has two potential reasons :
+- The HLS defines variants, groups of tracks that may be read together
+- Safari may decide to enable a track for accessibility or user language convenience
+  (e.g. Safari may switch subtitle to your OS language if you pick another audio language)
 
 ---
 
@@ -1360,8 +1415,10 @@ player.setPreferredAudioTracks([
 
 ---
 
-:warning: This method will have no effect for contents loaded in _DirectFile_
-mode (see [loadVideo options](./loadVideo_options.md#prop-transport)).
+:warning: This option will have no effect in _DirectFile_ mode
+(see [loadVideo options](./loadVideo_options.md#prop-transport)) when either :
+- No audio track API was supported on current browser
+- The media file tracks are not supported on browser
 
 ---
 
@@ -1443,8 +1500,10 @@ player.setPreferredTextTracks([
 
 ---
 
-:warning: This method will have no effect for contents loaded in _DirectFile_
-mode (see [loadVideo options](./loadVideo_options.md#prop-transport)).
+:warning: This option will have no effect in _DirectFile_ mode
+(see [loadVideo options](./loadVideo_options.md#prop-transport)) when either :
+- No audio track API was supported on current browser
+- The media file tracks are not supported on browser
 
 ---
 
