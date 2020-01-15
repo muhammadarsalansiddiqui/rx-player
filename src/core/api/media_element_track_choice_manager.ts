@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import objectAssign from "object-assign";
 import { BehaviorSubject } from "rxjs";
 import EventEmitter from "../../utils/event_emitter";
 import normalizeLanguage from "../../utils/languages";
@@ -310,19 +309,29 @@ export default class MediaElementTrackChoiceManager extends EventEmitter<any> {
 
   public getAvailableAudioTracks(): ITMAudioTrackListItem[]|undefined {
     return this._audioTracks.map(({ track, origTrack }) => {
-      return objectAssign(track, { active: origTrack.enabled });
+      return { id: track.id,
+               language: track.language,
+               normalized: track.normalized,
+               audioDescription: track.audioDescription,
+               active: origTrack.enabled };
     });
   }
 
   public getAvailableTextTracks(): ITMTextTrackListItem[]|undefined {
     return this._textTracks.map(({ track, origTrack }) => {
-      return objectAssign(track, { active: origTrack.mode === "showing" });
+      return { id: track.id,
+               language: track.language,
+               normalized: track.normalized,
+               closedCaption: track.closedCaption,
+               active: origTrack.mode === "showing" };
     });
   }
 
   public getAvailableVideoTracks(): ITMVideoTrackListItem[]|undefined {
     return this._videoTracks.map(({ track, origTrack }) => {
-      return objectAssign(track, { active: origTrack.selected });
+      return { id: track.id,
+               representations: track.representations,
+               active: origTrack.selected };
     });
   }
 
