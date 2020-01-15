@@ -15,11 +15,8 @@
  */
 
 import objectAssign from "object-assign";
-import {
-  BehaviorSubject,
-  Observable,
-  ReplaySubject,
-} from "rxjs";
+import { BehaviorSubject } from "rxjs";
+import EventEmitter from "../../utils/event_emitter";
 import normalizeLanguage from "../../utils/languages";
 import {
   IAudioTrackPreference,
@@ -32,58 +29,18 @@ import {
   ITMVideoTrackListItem,
 } from "./track_choice_manager";
 
-interface ITMAudioTrackEvent { type: "audio";
-                               track: ITMAudioTrack | null; }
-interface ITMTextTrackEvent { type: "text";
-                              track: ITMTextTrack | null; }
-interface ITMVideoTrackEvent { type: "video";
-                               track: ITMVideoTrack | null; }
-type ITMTrackEvent = ITMAudioTrackEvent | ITMTextTrackEvent | ITMVideoTrackEvent;
-
 // TODO w3c defines an onremovetrack attribute which is not present on
 // ts type definition
 export interface ICustomTextTrackList extends TextTrackList {
   onremovetrack: ((ev: TrackEvent) => void) | null;
-}
-
-let _id = 0;
-/**
- * Generate new id at call by incrementing a number
- * @param {string}
- * @returns {string}
- */
-function generateId(type: string): string {
-  const id = "gen_" + type + "_" + _id.toString();
-  _id++;
-  return id;
-}
-
-function formatAudioTrack(nativeAudioTrack: AudioTrack): ITMAudioTrack {
-  const { language } = nativeAudioTrack;
-  return { language,
-           id: generateId("audio"),
-           normalized: normalizeLanguage(language),
-           audioDescription: false };
-}
-
-function formatVideoTrack(): ITMVideoTrack {
-  return { id: generateId("video"),
-           representations: [] as [], };
-}
-
-function formatTextTrack(nativeTextTrack: TextTrack): ITMTextTrack {
-  const { language } = nativeTextTrack;
-  return { language,
-           id: generateId("text"),
-           normalized: normalizeLanguage(language),
-           closedCaption: false };
+  onchange: () => void|null;
 }
 
 /**
  * Manage video, audio and text tracks for current direct file content.
  * @class MediaElementTrackChoiceManager
  */
-export default class MediaElementTrackChoiceManager {
+export default class MediaElementTrackChoiceManager extends EventEmitter<any> {
   // Array of preferred languages for audio tracks.
   // Sorted by order of preference descending.
   private _preferredAudioTracks : BehaviorSubject<IAudioTrackPreference[]>;
@@ -92,7 +49,6 @@ export default class MediaElementTrackChoiceManager {
   // Sorted by order of preference descending.
   private _preferredTextTracks : BehaviorSubject<ITextTrackPreference[]>;
 
-  private _textTrackChanged$ : ReplaySubject<"video"|"audio"|"text">;
   private _audioTracks : Array<{ track: ITMAudioTrack; origTrack: AudioTrack }>;
   private _textTracks : Array<{ track: ITMTextTrack; origTrack: TextTrack }>;
   private _videoTracks : Array<{ track: ITMVideoTrack; origTrack: VideoTrack }>;
@@ -102,153 +58,165 @@ export default class MediaElementTrackChoiceManager {
                  preferredTextTracks : BehaviorSubject<ITextTrackPreference[]>; },
     mediaElement: HTMLMediaElement
   ) {
+    super();
     const { preferredAudioTracks, preferredTextTracks } = defaults;
-
-    this._textTrackChanged$ = new ReplaySubject();
 
     this._preferredAudioTracks = preferredAudioTracks;
     this._preferredTextTracks = preferredTextTracks;
 
     this._audioTracks = [];
-    if (mediaElement.audioTracks != null) {
-      for (let i = 0; i < mediaElement.audioTracks.length; i++) {
-        const audioTrack = mediaElement.audioTracks[i];
-        this._audioTracks.push({ track: formatAudioTrack(audioTrack),
-                                 origTrack: audioTrack });
+
+    function hasChanged(oldArray: Array<{ origTrack: VideoTrack|AudioTrack|TextTrack }>,
+                        newArray: Array<{ origTrack: VideoTrack|AudioTrack|TextTrack }>) {
+      if (oldArray.length !== newArray.length) {
+        return true;
       }
-      mediaElement.audioTracks.onaddtrack =
-        ({ track }) => {
-          if (track instanceof AudioTrack) {
-            this._audioTracks.push({ track: formatAudioTrack(track),
-                                     origTrack: track });
-            this._textTrackChanged$.next("audio");
-          }
-        };
-      mediaElement.audioTracks.onremovetrack =
-        ({ track }) => {
-          for (let i = 0; i < this._audioTracks.length; i++) {
-            const audioTrack = this._audioTracks[i];
-            if (audioTrack.origTrack === track) {
-              this._audioTracks.splice(i, 1);
-              this._textTrackChanged$.next("audio");
-              return;
-            }
-          }
-        };
+      for (let i = 0; i < newArray.length; i++) {
+        if (newArray[i].origTrack !== oldArray[i].origTrack) {
+          return true;
+        }
+      }
+      return false;
     }
+
+    // Create audio tracks from native audio tracks.
+    const createAudioTracks = () => {
+      const newAudioTracks = [];
+      const { audioTracks } = mediaElement;
+      let languageOccurences: { [key: string]: number } = {};
+      for (let i = 0; i < audioTracks.length; i++) {
+        const audioTrack = audioTracks[i];
+        const language = audioTrack.language === "" ? "nolang" :
+                                                      audioTrack.language;
+        if (languageOccurences[language] === undefined) {
+          languageOccurences[language] = 1;
+        }
+        const id = "gen_audio_" +
+                   language +
+                   "_" +
+                   languageOccurences[language].toString();
+        languageOccurences[language] += 1;
+        const track = { language: audioTrack.language,
+                        id,
+                        normalized: normalizeLanguage(audioTrack.language),
+                        audioDescription: false };
+        newAudioTracks.push({ track,
+                              origTrack: audioTrack });
+      }
+      languageOccurences = {};
+      return newAudioTracks;
+    };
+
+    if (mediaElement.audioTracks != null) {
+      this._audioTracks = createAudioTracks();
+      mediaElement.audioTracks.onaddtrack = () => {
+        const newAudioTracks = createAudioTracks();
+        if (hasChanged(this._audioTracks, newAudioTracks)) {
+          this._audioTracks = newAudioTracks;
+          this.trigger("availableTracksChange", { type: "audio" });
+        }
+      };
+      mediaElement.audioTracks.onremovetrack = () => {
+        const newAudioTracks = createAudioTracks();
+        if (hasChanged(this._audioTracks, newAudioTracks)) {
+          this._audioTracks = newAudioTracks;
+          this.trigger("availableTracksChange", { type: "audio" });
+        }
+      };
+    }
+
+    // Create text tracks from native text tracks.
+    const createTextTracks = () => {
+      const { textTracks } = mediaElement;
+      const newTextTracks = [];
+      let languageOccurences: { [key: string]: number } = {};
+      for (let i = 0; i < textTracks.length; i++) {
+        const textTrack = textTracks[i];
+        const language = textTrack.language === "" ? "nolang" :
+                                                     textTrack.language;
+        if (languageOccurences[language] === undefined) {
+          languageOccurences[language] = 1;
+        }
+        const id = "gen_text_" +
+                   language +
+                   "_" +
+                   languageOccurences[language].toString();
+        languageOccurences[language] += 1;
+        const track =  { language: textTrack.language,
+                         id,
+                         normalized: normalizeLanguage(textTrack.language),
+                         closedCaption: false };
+        newTextTracks.push({ track,
+                             origTrack: textTrack });
+      }
+      languageOccurences = {};
+      return newTextTracks;
+    };
 
     this._textTracks = [];
     if (mediaElement.textTracks != null) {
-      for (let i = 0; i < mediaElement.textTracks.length; i++) {
-        const textTrack = mediaElement.textTracks[i];
-        this._textTracks.push({ track: formatTextTrack(textTrack),
-                                origTrack: textTrack });
-      }
-      mediaElement.textTracks.onaddtrack =
-        ({ track }) => {
-          if (track instanceof TextTrack) {
-            this._textTrackChanged$.next("text");
-            this._textTracks.push({ track: formatTextTrack(track),
-                                    origTrack: track });
-          }
-        };
-      (mediaElement.textTracks as ICustomTextTrackList).onremovetrack =
-        ({ track }) => {
-          for (let i = 0; i < this._textTracks.length; i++) {
-            const textTrack = this._textTracks[i];
-            if (textTrack.origTrack === track) {
-              this._textTracks.splice(i, 1);
-              this._textTrackChanged$.next("text");
-              return;
-            }
-          }
-        };
+      this._textTracks = createTextTracks();
+      mediaElement.textTracks.onaddtrack = () => {
+        const newTextTracks = createTextTracks();
+        if (hasChanged(this._textTracks, newTextTracks)) {
+          this._textTracks = newTextTracks;
+          this.trigger("availableTracksChange", { type: "text" });
+        }
+      };
+      (mediaElement.textTracks as ICustomTextTrackList).onremovetrack = () => {
+        const newTextTracks = createTextTracks();
+        if (hasChanged(this._textTracks, newTextTracks)) {
+          this._textTracks = newTextTracks;
+          this.trigger("availableTracksChange", { type: "text" });
+        }
+      };
     }
+
+    // Create video tracks from native video tracks.
+    const createVideoTracks = () => {
+      const newVideoTracks = [];
+      const { videoTracks } = mediaElement;
+      let languageOccurences: { [key: string]: number } = {};
+      for (let i = 0; i < videoTracks.length; i++) {
+        const videoTrack = videoTracks[i];
+        const language = videoTrack.language === "" ? "nolang" :
+                                                      videoTrack.language;
+        if (languageOccurences[language] === undefined) {
+          languageOccurences[language] = 1;
+        }
+        const id = "gen_video_" +
+                   language +
+                   "_" +
+                   languageOccurences[language].toString();
+        languageOccurences[language] += 1;
+        newVideoTracks.push({ track: { id,
+                                       representations: [] },
+                              origTrack: videoTrack });
+      }
+      languageOccurences = {};
+      return newVideoTracks;
+    };
 
     this._videoTracks = [];
     if (mediaElement.videoTracks != null) {
-      for (let i = 0; i < mediaElement.videoTracks.length; i++) {
-        const videoTrack = mediaElement.videoTracks[i];
-        this._videoTracks.push({ track: formatVideoTrack(),
-                                 origTrack: videoTrack });
-      }
-      mediaElement.videoTracks.onaddtrack =
-        ({ track }) => {
-          if (track instanceof VideoTrack) {
-            this._textTrackChanged$.next("video");
-            this._videoTracks.push({ track: formatVideoTrack(),
-                                     origTrack: track });
-          }
-        };
-      mediaElement.videoTracks.onremovetrack =
-        ({ track }) => {
-          for (let i = 0; i < this._videoTracks.length; i++) {
-            const videoTrack = this._videoTracks[i];
-            if (videoTrack.origTrack === track) {
-              this._videoTracks.splice(i, 1);
-              this._textTrackChanged$.next("video");
-              return;
-            }
-          }
-        };
+      this._videoTracks = createVideoTracks();
+      mediaElement.videoTracks.onaddtrack = () => {
+        const newVideoTracks = createVideoTracks();
+        if (hasChanged(this._videoTracks, newVideoTracks)) {
+          this._videoTracks = newVideoTracks;
+          this.trigger("availableTracksChange", { type: "video" });
+        }
+      };
+      mediaElement.videoTracks.onremovetrack = () => {
+        const newVideoTracks = createVideoTracks();
+        if (hasChanged(this._videoTracks, newVideoTracks)) {
+          this._videoTracks = newVideoTracks;
+          this.trigger("availableTracksChange", { type: "video" });
+        }
+      };
     }
-  }
 
-  public getAvailableTrackChanges$(): Observable<"video"|"audio"|"text"> {
-    return this._textTrackChanged$;
-  }
-
-  /**
-   * Monitor HTML5 tracks changes
-   * @returns {Observable.<Object>}
-   */
-  public onTrackChange$(mediaElement: HTMLMediaElement): Observable<ITMTrackEvent> {
-    return new Observable((obs) => {
-      const audioCallback = () => {
-        if (this._audioTracks !== undefined) {
-          for (let i = 0; i < this._audioTracks.length; i++) {
-            const { track, origTrack } = this._audioTracks[i];
-            if (origTrack.enabled) {
-              return obs.next({ type: "audio",
-                                track });
-            }
-          }
-        }
-        return obs.next({ type: "audio", track: null });
-      };
-      const textCallback = () => {
-        if (this._textTracks !== undefined) {
-          for (let i = 0; i < this._textTracks.length; i++) {
-            const { track, origTrack } = this._textTracks[i];
-            if (origTrack.mode === "showing") {
-              return obs.next({ type: "text",
-                                track });
-            }
-          }
-        }
-        return obs.next({ type: "text", track: null });
-      };
-      const videoCallback = () => {
-        if (this._videoTracks !== undefined) {
-          for (let i = 0; i < this._videoTracks.length; i++) {
-            const { track, origTrack } = this._videoTracks[i];
-            if (origTrack.selected) {
-              obs.next({ type: "video",
-                         track });
-            }
-          }
-        }
-        return obs.next({ type: "video", track: null });
-      };
-      mediaElement.audioTracks?.addEventListener("change", audioCallback);
-      mediaElement.videoTracks?.addEventListener("change", videoCallback);
-      mediaElement.textTracks?.addEventListener("change", textCallback);
-      return () => {
-        mediaElement.audioTracks?.removeEventListener("change", audioCallback);
-        mediaElement.videoTracks?.removeEventListener("change", videoCallback);
-        mediaElement.textTracks?.removeEventListener("change", textCallback);
-      };
-    });
+    this._onTrackChange(mediaElement);
   }
 
   public setInitialAudioTrack() : void {
@@ -360,7 +328,7 @@ export default class MediaElementTrackChoiceManager {
 
   private _findFirstOptimalAudioTrackId(
     normalizedLanguages: string[]
-  ): string|number|null|undefined {
+  ): string|number|null {
     for (let i = 0; i < normalizedLanguages.length; i++) {
       const language = normalizedLanguages[i];
       for (let j = 0; j < this._audioTracks.length; j++) {
@@ -376,7 +344,7 @@ export default class MediaElementTrackChoiceManager {
 
   private _findFirstOptimalTextTrackId(
     normalizedLanguages: string[]
-  ): string|number|null|undefined {
+  ): string|number|null {
     for (let i = 0; i < normalizedLanguages.length; i++) {
       const language = normalizedLanguages[i];
       for (let j = 0; j < this._textTracks.length; j++) {
@@ -389,4 +357,64 @@ export default class MediaElementTrackChoiceManager {
     }
     return null;
   }
+
+  /**
+   * Monitor HTML5 tracks changes
+   */
+  private _onTrackChange(mediaElement: HTMLMediaElement): void {
+    const audioCallback = () => {
+      if (this._audioTracks !== undefined) {
+        for (let i = 0; i < this._audioTracks.length; i++) {
+          const { track, origTrack } = this._audioTracks[i];
+          if (origTrack.enabled) {
+            this.trigger("trackChange", { type: "audio",
+                                          track });
+            return;
+          }
+        }
+      }
+      this.trigger("trackChange", { type: "audio",
+                                    track: null });
+      return;
+    };
+    const textCallback = () => {
+      if (this._textTracks !== undefined) {
+        for (let i = 0; i < this._textTracks.length; i++) {
+          const { track, origTrack } = this._textTracks[i];
+          if (origTrack.mode === "showing") {
+            this.trigger("trackChange", { type: "text",
+                                          track });
+            return;
+          }
+        }
+      }
+      this.trigger("trackChange", { type: "text",
+                                    track: null });
+      return;
+    };
+    const videoCallback = () => {
+      if (this._videoTracks !== undefined) {
+        for (let i = 0; i < this._videoTracks.length; i++) {
+          const { track, origTrack } = this._videoTracks[i];
+          if (origTrack.selected) {
+            this.trigger("trackChange", { type: "video",
+                                          track });
+            return;
+          }
+        }
+      }
+      this.trigger("trackChange", { type: "video",
+                                    track: null });
+      return;
+    };
+    if (mediaElement.audioTracks !== undefined) {
+      mediaElement.audioTracks.onchange = audioCallback;
+    }
+    if (mediaElement.textTracks !== undefined) {
+      (mediaElement.textTracks as ICustomTextTrackList).onchange = textCallback;
+    }
+    if (mediaElement.videoTracks !== undefined) {
+      mediaElement.videoTracks.onchange = videoCallback;
+    }
+}
 }

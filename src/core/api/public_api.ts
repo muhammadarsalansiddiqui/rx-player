@@ -2061,8 +2061,8 @@ class Player extends EventEmitter<IPublicAPIEvent> {
     this._priv_triggerEventIfChanged("availableVideoTracksChange",
                                      this.getAvailableVideoTracks());
 
-    this._priv_mediaElementTrackChoiceManager.getAvailableTrackChanges$()
-      .subscribe((type) => {
+    this._priv_mediaElementTrackChoiceManager
+      .addEventListener("availableTracksChange", ({ type }: { type: string }) => {
         switch (type) {
           case "video":
             this._priv_triggerEventIfChanged("availableVideoTracksChange",
@@ -2098,20 +2098,28 @@ class Player extends EventEmitter<IPublicAPIEvent> {
       this._priv_triggerEventIfChanged("videoTrackChange", videoTrack);
     }
 
-    this._priv_mediaElementTrackChoiceManager
-      .onTrackChange$(this.videoElement).subscribe((evt) => {
-        switch (evt.type) {
-          case "audio":
-            this._priv_triggerEventIfChanged("audioTrackChange", evt.track);
-            break;
-          case "video":
-            this._priv_triggerEventIfChanged("videoTrackChange", evt.track);
-            break;
-          case "text":
-            this._priv_triggerEventIfChanged("textTrackChange", evt.track);
-            break;
-        }
-      });
+    this._priv_mediaElementTrackChoiceManager.addEventListener("trackChange", (evt: {
+      type: "audio";
+      track: ITMAudioTrack;
+    } | {
+      type: "text";
+      track: ITMTextTrack;
+    } | {
+      type: "video";
+      track: ITMVideoTrack;
+    }) => {
+      switch (evt.type) {
+        case "audio":
+          this._priv_triggerEventIfChanged("audioTrackChange", evt.track);
+          break;
+        case "video":
+          this._priv_triggerEventIfChanged("videoTrackChange", evt.track);
+          break;
+        case "text":
+          this._priv_triggerEventIfChanged("textTrackChange", evt.track);
+          break;
+      }
+    });
   }
 
   /**
