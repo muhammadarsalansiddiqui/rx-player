@@ -67,7 +67,10 @@ import ABRManager, {
   IABRRequest,
 } from "../../abr";
 import { SegmentPipelinesManager } from "../../pipelines";
-import { QueuedSourceBuffer } from "../../source_buffers";
+import {
+  QueuedSourceBuffer,
+  SegmentInventory,
+} from "../../source_buffers";
 import EVENTS from "../events_generators";
 import RepresentationBuffer, {
   IRepresentationBufferClockTick,
@@ -98,6 +101,7 @@ export interface IAdaptationBufferArguments<T> {
               adaptation : Adaptation; }; // content to download
   options: { manualBitrateSwitchingMode : "seamless" | "direct" }; // Switch strategy
   queuedSourceBuffer : QueuedSourceBuffer<T>; // Interact with the SourceBuffer
+  segmentInventory : SegmentInventory; // Store information about pushed segments
   segmentPipelinesManager : SegmentPipelinesManager<any>; // Load and parse segments
   wantedBufferAhead$ : BehaviorSubject<number>; // Buffer goal wanted by the user
 }
@@ -120,6 +124,7 @@ export default function AdaptationBuffer<T>({
   content,
   options,
   queuedSourceBuffer,
+  segmentInventory,
   segmentPipelinesManager,
   wantedBufferAhead$,
 } : IAdaptationBufferArguments<T>) : Observable<IAdaptationBufferEvent<T>> {
@@ -267,6 +272,7 @@ export default function AdaptationBuffer<T>({
                                                period,
                                                manifest },
                                     queuedSourceBuffer,
+                                    segmentInventory,
                                     segmentFetcher,
                                     terminate$: terminateCurrentBuffer$,
                                     bufferGoal$,

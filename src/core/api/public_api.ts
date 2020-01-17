@@ -1783,7 +1783,8 @@ class Player extends EventEmitter<IPublicAPIEvent> {
     const queuedSourceBuffer = this._priv_contentInfos
                                  .sourceBuffersStore.get(bufferType);
     return queuedSourceBuffer === null ? null :
-                                         queuedSourceBuffer.getInventory();
+                                         queuedSourceBuffer
+                                           .segmentInventory.getInventory();
   }
 
   /**
