@@ -65,13 +65,21 @@ export default class MediaElementTrackChoiceManager extends EventEmitter<any> {
 
     this._audioTracks = [];
 
-    function hasChanged(oldArray: Array<{ origTrack: VideoTrack|AudioTrack|TextTrack }>,
-                        newArray: Array<{ origTrack: VideoTrack|AudioTrack|TextTrack }>) {
-      if (oldArray.length !== newArray.length) {
+    /**
+     * Check if track array is different from an other one
+     * @param {Array.<Object>} oldTrackArray
+     * @param {Array.<Object>} newTrackArray
+     * @returns {boolean}
+     */
+    function areTrackArraysDifferent(
+      oldTrackArray: Array<{ origTrack: VideoTrack|AudioTrack|TextTrack }>,
+      newTrackArray: Array<{ origTrack: VideoTrack|AudioTrack|TextTrack }>
+    ) {
+      if (newTrackArray.length !== oldTrackArray.length) {
         return true;
       }
-      for (let i = 0; i < newArray.length; i++) {
-        if (newArray[i].origTrack !== oldArray[i].origTrack) {
+      for (let i = 0; i < newTrackArray.length; i++) {
+        if (newTrackArray[i].origTrack !== oldTrackArray[i]?.origTrack) {
           return true;
         }
       }
@@ -110,14 +118,14 @@ export default class MediaElementTrackChoiceManager extends EventEmitter<any> {
       this._audioTracks = createAudioTracks();
       mediaElement.audioTracks.onaddtrack = () => {
         const newAudioTracks = createAudioTracks();
-        if (hasChanged(this._audioTracks, newAudioTracks)) {
+        if (areTrackArraysDifferent(this._audioTracks, newAudioTracks)) {
           this._audioTracks = newAudioTracks;
           this.trigger("availableTracksChange", { type: "audio" });
         }
       };
       mediaElement.audioTracks.onremovetrack = () => {
         const newAudioTracks = createAudioTracks();
-        if (hasChanged(this._audioTracks, newAudioTracks)) {
+        if (areTrackArraysDifferent(this._audioTracks, newAudioTracks)) {
           this._audioTracks = newAudioTracks;
           this.trigger("availableTracksChange", { type: "audio" });
         }
@@ -157,14 +165,14 @@ export default class MediaElementTrackChoiceManager extends EventEmitter<any> {
       this._textTracks = createTextTracks();
       mediaElement.textTracks.onaddtrack = () => {
         const newTextTracks = createTextTracks();
-        if (hasChanged(this._textTracks, newTextTracks)) {
+        if (areTrackArraysDifferent(this._textTracks, newTextTracks)) {
           this._textTracks = newTextTracks;
           this.trigger("availableTracksChange", { type: "text" });
         }
       };
       (mediaElement.textTracks as ICustomTextTrackList).onremovetrack = () => {
         const newTextTracks = createTextTracks();
-        if (hasChanged(this._textTracks, newTextTracks)) {
+        if (areTrackArraysDifferent(this._textTracks, newTextTracks)) {
           this._textTracks = newTextTracks;
           this.trigger("availableTracksChange", { type: "text" });
         }
@@ -201,14 +209,14 @@ export default class MediaElementTrackChoiceManager extends EventEmitter<any> {
       this._videoTracks = createVideoTracks();
       mediaElement.videoTracks.onaddtrack = () => {
         const newVideoTracks = createVideoTracks();
-        if (hasChanged(this._videoTracks, newVideoTracks)) {
+        if (areTrackArraysDifferent(this._videoTracks, newVideoTracks)) {
           this._videoTracks = newVideoTracks;
           this.trigger("availableTracksChange", { type: "video" });
         }
       };
       mediaElement.videoTracks.onremovetrack = () => {
         const newVideoTracks = createVideoTracks();
-        if (hasChanged(this._videoTracks, newVideoTracks)) {
+        if (areTrackArraysDifferent(this._videoTracks, newVideoTracks)) {
           this._videoTracks = newVideoTracks;
           this.trigger("availableTracksChange", { type: "video" });
         }
