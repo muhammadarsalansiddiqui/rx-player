@@ -15,7 +15,7 @@
  */
 
 import { BehaviorSubject } from "rxjs";
-import MediaElementTrackManager from "../media_element_track_manager";
+import MediaElementTrackChoiceManager from "../media_element_track_choice_manager";
 
 const fakeMediaElement = {
   audioTracks: [
@@ -35,9 +35,9 @@ const fakeMediaElement = {
   ],
 };
 
-describe("API - MediaElementTrackManager", () => {
+describe("API - MediaElementTrackChoiceManager", () => {
   it("should returns correct results for getter", () => {
-      const trackManager = new MediaElementTrackManager(
+      const trackManager = new MediaElementTrackChoiceManager(
         {
           preferredAudioTracks: new BehaviorSubject([] as any[]),
           preferredTextTracks: new BehaviorSubject([] as any[]),
@@ -75,7 +75,7 @@ describe("API - MediaElementTrackManager", () => {
       });
   });
   it("should returns correct results for setters", () => {
-      const trackManager = new MediaElementTrackManager(
+      const trackManager = new MediaElementTrackChoiceManager(
         {
           preferredAudioTracks: new BehaviorSubject([] as any[]),
           preferredTextTracks: new BehaviorSubject([] as any[]),
@@ -104,7 +104,7 @@ describe("API - MediaElementTrackManager", () => {
       });
   });
   it("should emit available tracks change when changing text contents", (done) => {
-    const trackManager = new MediaElementTrackManager(
+    const trackManager = new MediaElementTrackChoiceManager(
       {
         preferredAudioTracks: new BehaviorSubject([] as any[]),
         preferredTextTracks: new BehaviorSubject([] as any[]),
@@ -125,7 +125,7 @@ describe("API - MediaElementTrackManager", () => {
   });
 
   it("should emit available tracks change when changing video contents", (done) => {
-    const trackManager = new MediaElementTrackManager(
+    const trackManager = new MediaElementTrackChoiceManager(
       {
         preferredAudioTracks: new BehaviorSubject([] as any[]),
         preferredTextTracks: new BehaviorSubject([] as any[]),
@@ -146,7 +146,7 @@ describe("API - MediaElementTrackManager", () => {
   });
 
   it("should emit available tracks change when changing audio contents", (done) => {
-    const trackManager = new MediaElementTrackManager(
+    const trackManager = new MediaElementTrackChoiceManager(
       {
         preferredAudioTracks: new BehaviorSubject([] as any[]),
         preferredTextTracks: new BehaviorSubject([] as any[]),
@@ -167,7 +167,7 @@ describe("API - MediaElementTrackManager", () => {
   });
 
   it("should emit chosen track when changing text content", (done) => {
-    const trackManager = new MediaElementTrackManager(
+    const trackManager = new MediaElementTrackChoiceManager(
       {
         preferredAudioTracks: new BehaviorSubject([] as any[]),
         preferredTextTracks: new BehaviorSubject([] as any[]),

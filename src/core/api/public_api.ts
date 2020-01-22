@@ -651,6 +651,71 @@ class Player extends EventEmitter<IPublicAPIEvent> {
 
     const isDirectFile = transport === "directfile";
 
+    if (isDirectFile) {
+      this._priv_mediaElementTrackChoiceManager = new MediaElementTrackChoiceManager({
+        preferredAudioTracks: defaultAudioTrack === undefined ?
+          this._priv_preferredAudioTracks :
+          new BehaviorSubject([defaultAudioTrack]),
+        preferredTextTracks: defaultTextTrack === undefined ?
+          this._priv_preferredTextTracks :
+          new BehaviorSubject([defaultTextTrack]),
+      }, this.videoElement);
+
+      let hasSetInitialAudio = false;
+      let hasSetInitialText = false;
+
+      this._priv_mediaElementTrackChoiceManager
+        .addEventListener("availableTracksChange", ({ type }: { type: string }) => {
+          switch (type) {
+            case "video":
+              this._priv_triggerEventIfChanged("availableVideoTracksChange",
+                                               this.getAvailableVideoTracks());
+              break;
+            case "audio":
+              if (!hasSetInitialAudio) {
+                this._priv_mediaElementTrackChoiceManager?.setInitialAudioTrack();
+                hasSetInitialAudio = true;
+              }
+              this._priv_triggerEventIfChanged("availableAudioTracksChange",
+                                               this.getAvailableAudioTracks());
+              break;
+            case "text":
+              if (!hasSetInitialText) {
+                this._priv_mediaElementTrackChoiceManager?.setInitialTextTrack();
+                hasSetInitialText = true;
+              }
+              this._priv_triggerEventIfChanged("availableTextTracksChange",
+                                               this.getAvailableTextTracks());
+              break;
+            default:
+              break;
+          }
+        });
+
+      this._priv_mediaElementTrackChoiceManager.addEventListener("trackChange", (evt: {
+        type: "audio";
+        track: ITMAudioTrack;
+      } | {
+        type: "text";
+        track: ITMTextTrack;
+      } | {
+        type: "video";
+        track: ITMVideoTrack;
+      }) => {
+        switch (evt.type) {
+          case "audio":
+            this._priv_triggerEventIfChanged("audioTrackChange", evt.track);
+            break;
+          case "video":
+            this._priv_triggerEventIfChanged("videoTrackChange", evt.track);
+            break;
+          case "text":
+            this._priv_triggerEventIfChanged("textTrackChange", evt.track);
+            break;
+        }
+      });
+    }
+
     this._priv_currentError = null;
     this._priv_contentInfos = { url,
                                 isDirectFile,
@@ -1836,6 +1901,7 @@ class Player extends EventEmitter<IPublicAPIEvent> {
 
     this._priv_contentInfos = null;
     this._priv_trackChoiceManager = null;
+    this._priv_mediaElementTrackChoiceManager?.removeEventListener();
     this._priv_mediaElementTrackChoiceManager = null;
 
     this._priv_contentEventsMemory = {};
@@ -1914,10 +1980,6 @@ class Player extends EventEmitter<IPublicAPIEvent> {
         if (this._priv_contentInfos === null) {
           log.error("API: Loaded event while no content is loaded");
           return;
-        }
-        const { isDirectFile } = this._priv_contentInfos;
-        if (isDirectFile) {
-          this._priv_onLoadedDirectFile();
         }
         this._priv_contentInfos.sourceBuffersStore = event.value.sourceBuffersStore;
         break;
@@ -2025,101 +2087,6 @@ class Player extends EventEmitter<IPublicAPIEvent> {
           this._priv_trackChoiceManager.update();
         }
       });
-  }
-
-  /**
-   * React on direct file loaded state :
-   * - Setup the media element manager
-   * - Send tracks events
-   * @returns {void}
-   */
-  private _priv_onLoadedDirectFile(): void {
-    if (this.videoElement === null) {
-      throw new Error("Disposed player.");
-    }
-    if (this._priv_contentInfos === null || this.videoElement === null) {
-      log.error("API: Can't setup media element track manager" +
-                "because no content loaded.");
-      return;
-    }
-
-    const { initialAudioTrack, initialTextTrack } = this._priv_contentInfos;
-
-    this._priv_mediaElementTrackChoiceManager = new MediaElementTrackChoiceManager({
-      preferredAudioTracks: initialAudioTrack === undefined ?
-        this._priv_preferredAudioTracks :
-        new BehaviorSubject([initialAudioTrack]),
-      preferredTextTracks: initialTextTrack === undefined ?
-        this._priv_preferredTextTracks :
-        new BehaviorSubject([initialTextTrack]),
-    }, this.videoElement);
-
-    this._priv_triggerEventIfChanged("availableAudioTracksChange",
-                                     this.getAvailableAudioTracks());
-    this._priv_triggerEventIfChanged("availableTextTracksChange",
-                                     this.getAvailableTextTracks());
-    this._priv_triggerEventIfChanged("availableVideoTracksChange",
-                                     this.getAvailableVideoTracks());
-
-    this._priv_mediaElementTrackChoiceManager
-      .addEventListener("availableTracksChange", ({ type }: { type: string }) => {
-        switch (type) {
-          case "video":
-            this._priv_triggerEventIfChanged("availableVideoTracksChange",
-                                             this.getAvailableVideoTracks());
-            break;
-          case "audio":
-            this._priv_triggerEventIfChanged("availableAudioTracksChange",
-                                             this.getAvailableAudioTracks());
-            break;
-          case "text":
-            this._priv_triggerEventIfChanged("availableTextTracksChange",
-                                             this.getAvailableTextTracks());
-            break;
-          default:
-            break;
-        }
-      });
-
-    this._priv_mediaElementTrackChoiceManager.setInitialAudioTrack();
-    this._priv_mediaElementTrackChoiceManager.setInitialTextTrack();
-
-    const audioTrack = this._priv_mediaElementTrackChoiceManager.getChosenAudioTrack();
-    const textTrack = this._priv_mediaElementTrackChoiceManager.getChosenTextTrack();
-    const videoTrack = this._priv_mediaElementTrackChoiceManager.getChosenVideoTrack();
-
-    if (audioTrack !== undefined) {
-      this._priv_triggerEventIfChanged("audioTrackChange", audioTrack);
-    }
-    if (textTrack !== undefined) {
-      this._priv_triggerEventIfChanged("textTrackChange", textTrack);
-    }
-    if (videoTrack !== undefined) {
-      this._priv_triggerEventIfChanged("videoTrackChange", videoTrack);
-    }
-
-    this._priv_mediaElementTrackChoiceManager.addEventListener("trackChange", (evt: {
-      type: "audio";
-      track: ITMAudioTrack;
-    } | {
-      type: "text";
-      track: ITMTextTrack;
-    } | {
-      type: "video";
-      track: ITMVideoTrack;
-    }) => {
-      switch (evt.type) {
-        case "audio":
-          this._priv_triggerEventIfChanged("audioTrackChange", evt.track);
-          break;
-        case "video":
-          this._priv_triggerEventIfChanged("videoTrackChange", evt.track);
-          break;
-        case "text":
-          this._priv_triggerEventIfChanged("textTrackChange", evt.track);
-          break;
-      }
-    });
   }
 
   /**
