@@ -99,19 +99,17 @@ export default class MediaElementTrackChoiceManager
     const createAudioTracks = () => {
       const newAudioTracks = [];
       const { audioTracks } = mediaElement;
-      let languageOccurences: { [key: string]: number } = {};
+      let languagesOccurences: Partial<Record<string, number>> = {};
       for (let i = 0; i < audioTracks.length; i++) {
         const audioTrack = audioTracks[i];
         const language = audioTrack.language === "" ? "nolang" :
                                                       audioTrack.language;
-        if (languageOccurences[language] === undefined) {
-          languageOccurences[language] = 1;
-        }
+        const occurences = languagesOccurences[language] ?? 1;
         const id = "gen_audio_" +
                    language +
                    "_" +
-                   languageOccurences[language].toString();
-        languageOccurences[language] += 1;
+                   occurences.toString();
+        languagesOccurences[language] = occurences + 1;
         const track = { language: audioTrack.language,
                         id,
                         normalized: normalizeLanguage(audioTrack.language),
@@ -119,7 +117,7 @@ export default class MediaElementTrackChoiceManager
         newAudioTracks.push({ track,
                               origTrack: audioTrack });
       }
-      languageOccurences = {};
+      languagesOccurences = {};
       return newAudioTracks;
     };
 
@@ -145,19 +143,17 @@ export default class MediaElementTrackChoiceManager
     const createTextTracks = () => {
       const { textTracks } = mediaElement;
       const newTextTracks = [];
-      let languageOccurences: { [key: string]: number } = {};
+      let languagesOccurences: Partial<Record<string, number>> = {};
       for (let i = 0; i < textTracks.length; i++) {
         const textTrack = textTracks[i];
         const language = textTrack.language === "" ? "nolang" :
                                                      textTrack.language;
-        if (languageOccurences[language] === undefined) {
-          languageOccurences[language] = 1;
-        }
+        const occurences = languagesOccurences[language] ?? 1;
         const id = "gen_text_" +
                    language +
                    "_" +
-                   languageOccurences[language].toString();
-        languageOccurences[language] += 1;
+                   occurences.toString();
+        languagesOccurences[language] = occurences + 1;
         const track =  { language: textTrack.language,
                          id,
                          normalized: normalizeLanguage(textTrack.language),
@@ -165,7 +161,7 @@ export default class MediaElementTrackChoiceManager
         newTextTracks.push({ track,
                              origTrack: textTrack });
       }
-      languageOccurences = {};
+      languagesOccurences = {};
       return newTextTracks;
     };
 
@@ -192,24 +188,22 @@ export default class MediaElementTrackChoiceManager
     const createVideoTracks = () => {
       const newVideoTracks = [];
       const { videoTracks } = mediaElement;
-      let languageOccurences: { [key: string]: number } = {};
+      let languagesOccurences: Partial<Record<string, number>> = {};
       for (let i = 0; i < videoTracks.length; i++) {
         const videoTrack = videoTracks[i];
         const language = videoTrack.language === "" ? "nolang" :
                                                       videoTrack.language;
-        if (languageOccurences[language] === undefined) {
-          languageOccurences[language] = 1;
-        }
+        const occurences = languagesOccurences[language] ?? 1;
         const id = "gen_video_" +
                    language +
                    "_" +
-                   languageOccurences[language].toString();
-        languageOccurences[language] += 1;
+                   occurences.toString();
+        languagesOccurences[language] = occurences + 1;
         newVideoTracks.push({ track: { id,
                                        representations: [] },
                               origTrack: videoTrack });
       }
-      languageOccurences = {};
+      languagesOccurences = {};
       return newVideoTracks;
     };
 
