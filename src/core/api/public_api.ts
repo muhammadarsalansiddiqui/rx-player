@@ -1639,7 +1639,8 @@ class Player extends EventEmitter<IPublicAPIEvent> {
     }
     const { currentPeriod, isDirectFile } = this._priv_contentInfos;
     if (isDirectFile) {
-      return this._priv_mediaElementTrackChoiceManager?.getChosenAudioTrack();
+      this._priv_mediaElementTrackChoiceManager?.getChosenAudioTrack();
+      return undefined;
     }
     if (this._priv_trackChoiceManager === null || currentPeriod === null) {
       return undefined;
@@ -1657,7 +1658,8 @@ class Player extends EventEmitter<IPublicAPIEvent> {
     }
     const { currentPeriod, isDirectFile } = this._priv_contentInfos;
     if (isDirectFile) {
-      return this._priv_mediaElementTrackChoiceManager?.getChosenTextTrack();
+      this._priv_mediaElementTrackChoiceManager?.getChosenTextTrack();
+      return undefined;
     }
     if (this._priv_trackChoiceManager === null || currentPeriod === null) {
       return undefined;
@@ -1675,7 +1677,8 @@ class Player extends EventEmitter<IPublicAPIEvent> {
     }
     const { currentPeriod, isDirectFile } = this._priv_contentInfos;
     if (isDirectFile) {
-      return this._priv_mediaElementTrackChoiceManager?.getChosenVideoTrack();
+      this._priv_mediaElementTrackChoiceManager?.getChosenVideoTrack();
+      return undefined;
     }
     if (this._priv_trackChoiceManager === null || currentPeriod === null) {
       return undefined;
@@ -1697,7 +1700,8 @@ class Player extends EventEmitter<IPublicAPIEvent> {
     if (isDirectFile) {
       this._priv_mediaElementTrackChoiceManager?.setAudioTrackById(audioId);
       return;
-    }    if (this._priv_trackChoiceManager === null || currentPeriod === null) {
+    }
+    if (this._priv_trackChoiceManager === null || currentPeriod === null) {
       throw new Error("No compatible content launched.");
     }
     try {
