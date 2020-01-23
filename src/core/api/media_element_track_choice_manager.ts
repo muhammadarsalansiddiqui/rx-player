@@ -32,7 +32,7 @@ import {
 // ts type definition
 export interface ICustomTextTrackList extends TextTrackList {
   onremovetrack: ((ev: TrackEvent) => void) | null;
-  onchange: () => void|null;
+  onchange: (() => void) | null;
 }
 
 interface IMediaElementTrackChoiceManagerEvents {
@@ -61,6 +61,8 @@ export default class MediaElementTrackChoiceManager
   private _textTracks : Array<{ track: ITMTextTrack; origTrack: TextTrack }>;
   private _videoTracks : Array<{ track: ITMVideoTrack; origTrack: VideoTrack }>;
 
+  private _mediaElement : HTMLMediaElement;
+
   constructor(
     defaults : { preferredAudioTracks : BehaviorSubject<IAudioTrackPreference[]>;
                  preferredTextTracks : BehaviorSubject<ITextTrackPreference[]>; },
@@ -72,7 +74,7 @@ export default class MediaElementTrackChoiceManager
     this._preferredAudioTracks = preferredAudioTracks;
     this._preferredTextTracks = preferredTextTracks;
 
-    this._audioTracks = [];
+    this._mediaElement = mediaElement;
 
     /**
      * Check if track array is different from an other one
@@ -125,6 +127,7 @@ export default class MediaElementTrackChoiceManager
       return newAudioTracks;
     };
 
+    this._audioTracks = [];
     if (mediaElement.audioTracks != null) {
       this._audioTracks = createAudioTracks();
       mediaElement.audioTracks.onaddtrack = () => {
@@ -274,18 +277,32 @@ export default class MediaElementTrackChoiceManager
       const { track, origTrack } = this._audioTracks[i];
       if (track.id === id) {
         origTrack.enabled = true;
+        return;
       }
+    }
+    throw new Error("Audio track not found.");
+  }
+
+  public disableTextTrack(): void {
+    for (let i = 0; i < this._textTracks.length; i++) {
+      const { origTrack } = this._textTracks[i];
+      origTrack.mode = "disabled";
     }
   }
 
   public setTextTrackById(id?: string|number): void {
+    let hasSetTrack = false;
     for (let i = 0; i < this._textTracks.length; i++) {
       const { track, origTrack } = this._textTracks[i];
       if (track.id === id) {
         origTrack.mode = "showing";
+        hasSetTrack = true;
       } else if (origTrack.mode === "showing" || origTrack.mode === "hidden") {
         origTrack.mode = "disabled";
       }
+    }
+    if (!hasSetTrack) {
+      throw new Error("Text track not found.");
     }
   }
 
@@ -294,8 +311,10 @@ export default class MediaElementTrackChoiceManager
       const { track, origTrack } = this._videoTracks[i];
       if (track.id === id) {
         origTrack.selected = true;
+        return;
       }
     }
+    throw new Error("Video track not found.");
   }
 
   public getChosenAudioTrack(): ITMAudioTrack|null|undefined {
@@ -354,6 +373,22 @@ export default class MediaElementTrackChoiceManager
                representations: track.representations,
                active: origTrack.selected };
     });
+  }
+
+  public dispose(): void {
+    this._mediaElement.videoTracks.onchange = null;
+    this._mediaElement.videoTracks.onaddtrack = null;
+    this._mediaElement.videoTracks.onremovetrack = null;
+
+    this._mediaElement.audioTracks.onchange = null;
+    this._mediaElement.audioTracks.onaddtrack = null;
+    this._mediaElement.audioTracks.onremovetrack = null;
+
+    (this._mediaElement.textTracks as ICustomTextTrackList).onchange = null;
+    this._mediaElement.textTracks.onaddtrack = null;
+    (this._mediaElement.textTracks as ICustomTextTrackList).onremovetrack = null;
+
+    this.removeEventListener();
   }
 
   private _findFirstOptimalAudioTrackId(
@@ -446,5 +481,5 @@ export default class MediaElementTrackChoiceManager
     if (mediaElement.videoTracks !== undefined) {
       mediaElement.videoTracks.onchange = videoCallback;
     }
-}
+  }
 }

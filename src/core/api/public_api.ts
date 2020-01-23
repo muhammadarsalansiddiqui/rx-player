@@ -1689,8 +1689,12 @@ class Player extends EventEmitter<IPublicAPIEvent> {
     }
     const { currentPeriod, isDirectFile } = this._priv_contentInfos;
     if (isDirectFile) {
-      this._priv_mediaElementTrackChoiceManager?.setAudioTrackById(audioId);
-      return;
+      try {
+        this._priv_mediaElementTrackChoiceManager?.setAudioTrackById(audioId);
+        return;
+      } catch (e) {
+        throw new Error("player: unknown audio track");
+      }
     }
     if (this._priv_trackChoiceManager === null || currentPeriod === null) {
       throw new Error("No compatible content launched.");
@@ -1715,8 +1719,12 @@ class Player extends EventEmitter<IPublicAPIEvent> {
     }
     const { currentPeriod, isDirectFile } = this._priv_contentInfos;
     if (isDirectFile) {
-      this._priv_mediaElementTrackChoiceManager?.setTextTrackById(textId);
-      return;
+      try {
+        this._priv_mediaElementTrackChoiceManager?.setTextTrackById(textId);
+        return;
+      } catch (e) {
+        throw new Error("player: unknown text track");
+      }
     }
     if (this._priv_trackChoiceManager === null || currentPeriod === null) {
       throw new Error("No compatible content launched.");
@@ -1738,7 +1746,7 @@ class Player extends EventEmitter<IPublicAPIEvent> {
     }
     const { currentPeriod, isDirectFile } = this._priv_contentInfos;
     if (isDirectFile) {
-      this._priv_mediaElementTrackChoiceManager?.setTextTrackById();
+      this._priv_mediaElementTrackChoiceManager?.disableTextTrack();
       return;
     }
     if (this._priv_trackChoiceManager === null || currentPeriod === null) {
@@ -1759,8 +1767,12 @@ class Player extends EventEmitter<IPublicAPIEvent> {
     }
     const { currentPeriod, isDirectFile } = this._priv_contentInfos;
     if (isDirectFile) {
-      this._priv_mediaElementTrackChoiceManager?.setVideoTrackById(videoId);
-      return;
+      try {
+        this._priv_mediaElementTrackChoiceManager?.setVideoTrackById(videoId);
+        return;
+      } catch (e) {
+        throw new Error("player: unknown video track");
+      }
     }
     if (this._priv_trackChoiceManager === null || currentPeriod === null) {
       throw new Error("No compatible content launched.");
@@ -1896,7 +1908,7 @@ class Player extends EventEmitter<IPublicAPIEvent> {
 
     this._priv_contentInfos = null;
     this._priv_trackChoiceManager = null;
-    this._priv_mediaElementTrackChoiceManager?.removeEventListener();
+    this._priv_mediaElementTrackChoiceManager?.dispose();
     this._priv_mediaElementTrackChoiceManager = null;
 
     this._priv_contentEventsMemory = {};
