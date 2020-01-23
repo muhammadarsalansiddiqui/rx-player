@@ -96,7 +96,11 @@ export default class MediaElementTrackChoiceManager
     }
 
     // Create audio tracks from native audio tracks.
-    const createAudioTracks = () => {
+    const createAudioTracks = (): Array<{ track: { id: string;
+                                                   normalized: string;
+                                                   language: string;
+                                                   audioDescription: boolean; };
+                                          origTrack: AudioTrack; }> => {
       const newAudioTracks = [];
       const { audioTracks } = mediaElement;
       let languagesOccurences: Partial<Record<string, number>> = {};
@@ -140,7 +144,11 @@ export default class MediaElementTrackChoiceManager
     }
 
     // Create text tracks from native text tracks.
-    const createTextTracks = () => {
+    const createTextTracks = (): Array<{ track: { id: string;
+                                                  normalized: string;
+                                                  language: string;
+                                                  closedCaption: boolean; };
+                                         origTrack: TextTrack; }> => {
       const { textTracks } = mediaElement;
       const newTextTracks = [];
       let languagesOccurences: Partial<Record<string, number>> = {};
@@ -185,7 +193,9 @@ export default class MediaElementTrackChoiceManager
     }
 
     // Create video tracks from native video tracks.
-    const createVideoTracks = () => {
+    const createVideoTracks = (): Array<{ track: { id: string;
+                                                   representations: []; };
+                                          origTrack: VideoTrack; }> => {
       const newVideoTracks = [];
       const { videoTracks } = mediaElement;
       let languagesOccurences: Partial<Record<string, number>> = {};
@@ -200,7 +210,7 @@ export default class MediaElementTrackChoiceManager
                    occurences.toString();
         languagesOccurences[language] = occurences + 1;
         newVideoTracks.push({ track: { id,
-                                       representations: [] },
+                                       representations: [] as [] },
                               origTrack: videoTrack });
       }
       languagesOccurences = {};
