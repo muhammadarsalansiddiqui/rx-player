@@ -665,7 +665,7 @@ class Player extends EventEmitter<IPublicAPIEvent> {
       let hasSetInitialText = false;
 
       this._priv_mediaElementTrackChoiceManager
-        .addEventListener("availableTracksChange", ({ type }: { type: string }) => {
+        .addEventListener("availableTracksChange", (type) => {
           switch (type) {
             case "video":
               this._priv_triggerEventIfChanged("availableVideoTracksChange",
@@ -692,16 +692,7 @@ class Player extends EventEmitter<IPublicAPIEvent> {
           }
         });
 
-      this._priv_mediaElementTrackChoiceManager.addEventListener("trackChange", (evt: {
-        type: "audio";
-        track: ITMAudioTrack;
-      } | {
-        type: "text";
-        track: ITMTextTrack;
-      } | {
-        type: "video";
-        track: ITMVideoTrack;
-      }) => {
+      this._priv_mediaElementTrackChoiceManager.addEventListener("trackChange", (evt) => {
         switch (evt.type) {
           case "audio":
             this._priv_triggerEventIfChanged("audioTrackChange", evt.track);

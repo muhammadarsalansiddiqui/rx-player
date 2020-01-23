@@ -35,11 +35,20 @@ export interface ICustomTextTrackList extends TextTrackList {
   onchange: () => void|null;
 }
 
+interface IMediaElementTrackChoiceManagerEvents {
+  availableTracksChange: "audio"|"video"|"text";
+  trackChange:
+    { type: "audio"; track: ITMAudioTrack|null } |
+    { type: "video"; track: ITMVideoTrack|null } |
+    { type: "text"; track: ITMTextTrack|null };
+}
+
 /**
  * Manage video, audio and text tracks for current direct file content.
  * @class MediaElementTrackChoiceManager
  */
-export default class MediaElementTrackChoiceManager extends EventEmitter<any> {
+export default class MediaElementTrackChoiceManager
+  extends EventEmitter<IMediaElementTrackChoiceManagerEvents> {
   // Array of preferred languages for audio tracks.
   // Sorted by order of preference descending.
   private _preferredAudioTracks : BehaviorSubject<IAudioTrackPreference[]>;
@@ -120,14 +129,14 @@ export default class MediaElementTrackChoiceManager extends EventEmitter<any> {
         const newAudioTracks = createAudioTracks();
         if (areTrackArraysDifferent(this._audioTracks, newAudioTracks)) {
           this._audioTracks = newAudioTracks;
-          this.trigger("availableTracksChange", { type: "audio" });
+          this.trigger("availableTracksChange", "audio");
         }
       };
       mediaElement.audioTracks.onremovetrack = () => {
         const newAudioTracks = createAudioTracks();
         if (areTrackArraysDifferent(this._audioTracks, newAudioTracks)) {
           this._audioTracks = newAudioTracks;
-          this.trigger("availableTracksChange", { type: "audio" });
+          this.trigger("availableTracksChange", "audio");
         }
       };
     }
@@ -167,14 +176,14 @@ export default class MediaElementTrackChoiceManager extends EventEmitter<any> {
         const newTextTracks = createTextTracks();
         if (areTrackArraysDifferent(this._textTracks, newTextTracks)) {
           this._textTracks = newTextTracks;
-          this.trigger("availableTracksChange", { type: "text" });
+          this.trigger("availableTracksChange", "text");
         }
       };
       (mediaElement.textTracks as ICustomTextTrackList).onremovetrack = () => {
         const newTextTracks = createTextTracks();
         if (areTrackArraysDifferent(this._textTracks, newTextTracks)) {
           this._textTracks = newTextTracks;
-          this.trigger("availableTracksChange", { type: "text" });
+          this.trigger("availableTracksChange", "text");
         }
       };
     }
@@ -211,14 +220,14 @@ export default class MediaElementTrackChoiceManager extends EventEmitter<any> {
         const newVideoTracks = createVideoTracks();
         if (areTrackArraysDifferent(this._videoTracks, newVideoTracks)) {
           this._videoTracks = newVideoTracks;
-          this.trigger("availableTracksChange", { type: "video" });
+          this.trigger("availableTracksChange", "video");
         }
       };
       mediaElement.videoTracks.onremovetrack = () => {
         const newVideoTracks = createVideoTracks();
         if (areTrackArraysDifferent(this._videoTracks, newVideoTracks)) {
           this._videoTracks = newVideoTracks;
-          this.trigger("availableTracksChange", { type: "video" });
+          this.trigger("availableTracksChange", "video");
         }
       };
     }

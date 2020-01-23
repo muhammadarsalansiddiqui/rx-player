@@ -113,7 +113,7 @@ describe("API - MediaElementTrackChoiceManager", () => {
     );
 
     trackManager
-      .addEventListener("availableTracksChange", ({ type }: { type: string }) => {
+      .addEventListener("availableTracksChange", (type) => {
         expect(type).toBe("text");
         done();
       });
@@ -134,7 +134,7 @@ describe("API - MediaElementTrackChoiceManager", () => {
     );
 
     trackManager
-      .addEventListener("availableTracksChange", ({ type }: { type: string }) => {
+      .addEventListener("availableTracksChange", (type) => {
         expect(type).toBe("video");
         done();
       });
@@ -155,7 +155,7 @@ describe("API - MediaElementTrackChoiceManager", () => {
     );
 
     trackManager
-      .addEventListener("availableTracksChange", ({ type }: { type: string }) => {
+      .addEventListener("availableTracksChange", (type) => {
         expect(type).toBe("audio");
         done();
       });
