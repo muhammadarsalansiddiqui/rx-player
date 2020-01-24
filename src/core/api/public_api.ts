@@ -1620,8 +1620,10 @@ class Player extends EventEmitter<IPublicAPIEvent> {
     }
     const { currentPeriod, isDirectFile } = this._priv_contentInfos;
     if (isDirectFile) {
-      this._priv_mediaElementTrackChoiceManager?.getChosenAudioTrack();
-      return undefined;
+      if (this._priv_mediaElementTrackChoiceManager === null) {
+        return undefined;
+      }
+      return this._priv_mediaElementTrackChoiceManager.getChosenAudioTrack();
     }
     if (this._priv_trackChoiceManager === null || currentPeriod === null) {
       return undefined;
@@ -1639,8 +1641,10 @@ class Player extends EventEmitter<IPublicAPIEvent> {
     }
     const { currentPeriod, isDirectFile } = this._priv_contentInfos;
     if (isDirectFile) {
-      this._priv_mediaElementTrackChoiceManager?.getChosenTextTrack();
-      return undefined;
+      if (this._priv_mediaElementTrackChoiceManager === null) {
+        return undefined;
+      }
+      return this._priv_mediaElementTrackChoiceManager.getChosenTextTrack();
     }
     if (this._priv_trackChoiceManager === null || currentPeriod === null) {
       return undefined;
@@ -1658,8 +1662,10 @@ class Player extends EventEmitter<IPublicAPIEvent> {
     }
     const { currentPeriod, isDirectFile } = this._priv_contentInfos;
     if (isDirectFile) {
-      this._priv_mediaElementTrackChoiceManager?.getChosenVideoTrack();
-      return undefined;
+      if (this._priv_mediaElementTrackChoiceManager === null) {
+        return undefined;
+      }
+      return this._priv_mediaElementTrackChoiceManager.getChosenVideoTrack();
     }
     if (this._priv_trackChoiceManager === null || currentPeriod === null) {
       return undefined;
