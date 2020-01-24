@@ -283,6 +283,9 @@ export default class MediaElementTrackChoiceManager
   }
 
   public getChosenAudioTrack(): ITMAudioTrack|null|undefined {
+    if (this._mediaElement.audioTracks === undefined) {
+      return undefined;
+    }
     for (let i = 0; i < this._audioTracks.length; i++) {
       const { track, origTrack } = this._audioTracks[i];
       if (origTrack.enabled) {
@@ -293,6 +296,9 @@ export default class MediaElementTrackChoiceManager
   }
 
   public getChosenTextTrack(): ITMTextTrack|null|undefined {
+    if (this._mediaElement.textTracks === undefined) {
+      return undefined;
+    }
     for (let i = 0; i < this._textTracks.length; i++) {
       const { track, origTrack } = this._textTracks[i];
       if (origTrack.mode === "showing") {
@@ -303,6 +309,9 @@ export default class MediaElementTrackChoiceManager
   }
 
   public getChosenVideoTrack(): ITMVideoTrack|null|undefined {
+    if (this._mediaElement.videoTracks === undefined) {
+      return undefined;
+    }
     for (let i = 0; i < this._videoTracks.length; i++) {
       const { track, origTrack } = this._videoTracks[i];
       if (origTrack.selected) {

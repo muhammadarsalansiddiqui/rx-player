@@ -1158,15 +1158,9 @@ The track is an object with the following properties:
 
 ``undefined`` if no content has been loaded yet.
 
-``undefined`` in _DirectFile_ mode (see [loadVideo
-options](./loadVideo_options.md#prop-transport)).
-
 In _DirectFile_ mode
 (see [loadVideo options](./loadVideo_options.md#prop-transport)) :
-- If track managing API (``mediaElement.audioTracks``) is supported on the browser
-  and media file tracks are handled by the browser :
-  returns an object that has same properties than in media source mode.
-- If no streaming file or no track managing API : ``undefined``.
+- No audio tracks API : ``undefined``.
 
 <a name="meth-getTextTrack"></a>
 ### getTextTrack ###############################################################
@@ -1198,10 +1192,7 @@ The track is an object with the following properties:
 
 In _DirectFile_ mode
 (see [loadVideo options](./loadVideo_options.md#prop-transport)) :
-- If track managing API (``mediaElement.textTracks``) is supported on the browser
-  and media file tracks are handled by the browser :
-  returns an object that has same properties than in media source mode.
-- If no streaming file or no track managing API : ``undefined``.
+- No text tracks API : ``undefined``.
 
 
 <a name="meth-getVideoTrack"></a>
@@ -1238,12 +1229,10 @@ The track is an object with the following properties:
 
 ``undefined`` if no content has been loaded yet.
 
+
 In _DirectFile_ mode
 (see [loadVideo options](./loadVideo_options.md#prop-transport)) :
-- If track managing API (``mediaElement.videoTracks``) is supported on the browser
-  and media file tracks are handled by the browser :
-  returns an object that has same properties than in media source mode.
-- If no streaming file or no track managing API : ``undefined``.
+- No video tracks API : ``undefined``.
 
 
 <a name="meth-setAudioTrack"></a>
