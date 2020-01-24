@@ -105,7 +105,7 @@ export default class MediaElementTrackChoiceManager
                                           origTrack: AudioTrack; }> => {
       const newAudioTracks = [];
       const { audioTracks } = mediaElement;
-      let languagesOccurences: Partial<Record<string, number>> = {};
+      const languagesOccurences: Partial<Record<string, number>> = {};
       for (let i = 0; i < audioTracks.length; i++) {
         const audioTrack = audioTracks[i];
         const language = audioTrack.language === "" ? "nolang" :
@@ -123,7 +123,6 @@ export default class MediaElementTrackChoiceManager
         newAudioTracks.push({ track,
                               origTrack: audioTrack });
       }
-      languagesOccurences = {};
       return newAudioTracks;
     };
 
@@ -156,7 +155,7 @@ export default class MediaElementTrackChoiceManager
                                          origTrack: TextTrack; }> => {
       const { textTracks } = mediaElement;
       const newTextTracks = [];
-      let languagesOccurences: Partial<Record<string, number>> = {};
+      const languagesOccurences: Partial<Record<string, number>> = {};
       for (let i = 0; i < textTracks.length; i++) {
         const textTrack = textTracks[i];
         const language = textTrack.language === "" ? "nolang" :
@@ -174,7 +173,6 @@ export default class MediaElementTrackChoiceManager
         newTextTracks.push({ track,
                              origTrack: textTrack });
       }
-      languagesOccurences = {};
       return newTextTracks;
     };
 
@@ -205,7 +203,7 @@ export default class MediaElementTrackChoiceManager
                                           origTrack: VideoTrack; }> => {
       const newVideoTracks = [];
       const { videoTracks } = mediaElement;
-      let languagesOccurences: Partial<Record<string, number>> = {};
+      const languagesOccurences: Partial<Record<string, number>> = {};
       for (let i = 0; i < videoTracks.length; i++) {
         const videoTrack = videoTracks[i];
         const language = videoTrack.language === "" ? "nolang" :
@@ -220,7 +218,6 @@ export default class MediaElementTrackChoiceManager
                                        representations: [] as [] },
                               origTrack: videoTrack });
       }
-      languagesOccurences = {};
       return newVideoTracks;
     };
 
