@@ -15,6 +15,7 @@
  */
 
 import { BehaviorSubject } from "rxjs";
+import { ICompatTextTrackList } from "../../compat/browser_compatibility_types";
 import EventEmitter from "../../utils/event_emitter";
 import normalizeLanguage from "../../utils/languages";
 import {
@@ -27,13 +28,6 @@ import {
   ITMVideoTrack,
   ITMVideoTrackListItem,
 } from "./track_choice_manager";
-
-// TODO w3c defines an onremovetrack attribute which is not present on
-// ts type definition
-export interface ICustomTextTrackList extends TextTrackList {
-  onremovetrack: ((ev: TrackEvent) => void) | null;
-  onchange: (() => void) | null;
-}
 
 interface IMediaElementTrackChoiceManagerEvents {
   availableTracksChange: "audio"|"video"|"text";
@@ -187,7 +181,7 @@ export default class MediaElementTrackChoiceManager
           this.trigger("availableTracksChange", "text");
         }
       };
-      (mediaElement.textTracks as ICustomTextTrackList).onremovetrack = () => {
+      (mediaElement.textTracks as ICompatTextTrackList).onremovetrack = () => {
         const newTextTracks = createTextTracks();
         if (areTrackArraysDifferent(this._textTracks, newTextTracks)) {
           this._textTracks = newTextTracks;
@@ -355,9 +349,9 @@ export default class MediaElementTrackChoiceManager
     this._mediaElement.audioTracks.onaddtrack = null;
     this._mediaElement.audioTracks.onremovetrack = null;
 
-    (this._mediaElement.textTracks as ICustomTextTrackList).onchange = null;
+    (this._mediaElement.textTracks as ICompatTextTrackList).onchange = null;
     this._mediaElement.textTracks.onaddtrack = null;
-    (this._mediaElement.textTracks as ICustomTextTrackList).onremovetrack = null;
+    (this._mediaElement.textTracks as ICompatTextTrackList).onremovetrack = null;
 
     this.removeEventListener();
   }
@@ -459,7 +453,7 @@ export default class MediaElementTrackChoiceManager
       mediaElement.audioTracks.onchange = audioCallback;
     }
     if (mediaElement.textTracks !== undefined) {
-      (mediaElement.textTracks as ICustomTextTrackList).onchange = textCallback;
+      (mediaElement.textTracks as ICompatTextTrackList).onchange = textCallback;
     }
     if (mediaElement.videoTracks !== undefined) {
       mediaElement.videoTracks.onchange = videoCallback;
