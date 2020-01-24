@@ -1263,15 +1263,19 @@ Set a new audio track from its id, recuperated from ``getAvailableAudioTracks``.
 
 :warning: This option will have no effect in _DirectFile_ mode
 (see [loadVideo options](./loadVideo_options.md#prop-transport)) when either :
-- No audio track API was supported on current browser
-- The media file tracks are not supported on browser
+- No audio track API is supported on current browser
+- The inner media file tracks are not detected / shown on the browser
 
-:warning: If used on Safari, in _DirectFile_ mode, track change may change track on other
-track type (e.g. changing video track may change subtitle track too).
+:warning: If used on Safari, in _DirectFile_ mode, the track change may change
+the track on other track type (e.g. changing video track may change subtitle
+track too).
 This has two potential reasons :
 - The HLS defines variants, groups of tracks that may be read together
-- Safari may decide to enable a track for accessibility or user language convenience
-  (e.g. Safari may switch subtitle to your OS language if you pick another audio language)
+- Safari may decide to enable a track for accessibility or user language
+convenience (e.g. Safari may switch subtitle to your OS language if you pick
+another audio language)
+The user may know through the [audioTrackChange]
+(./player_events.md#events-audioTrackChange) event that the track has changed.
 
 ---
 
@@ -1287,15 +1291,19 @@ Set a new text track from its id, recuperated from ``getAvailableTextTracks``.
 
 :warning: This option will have no effect in _DirectFile_ mode
 (see [loadVideo options](./loadVideo_options.md#prop-transport)) when either :
-- No audio track API was supported on current browser
-- The media file tracks are not supported on browser
+- No audio track API is supported on current browser
+- The inner media file tracks are not detected / shown on the browser
 
-:warning: If used on Safari, in _DirectFile_ mode, track change may change track on other
-track type (e.g. changing video track may change subtitle track too).
+:warning: If used on Safari, in _DirectFile_ mode, the track change may change
+the track on other track type (e.g. changing video track may change subtitle
+track too).
 This has two potential reasons :
 - The HLS defines variants, groups of tracks that may be read together
-- Safari may decide to enable a track for accessibility or user language convenience
-  (e.g. Safari may switch subtitle to your OS language if you pick another audio language)
+- Safari may decide to enable a track for accessibility or user language
+convenience (e.g. Safari may switch subtitle to your OS language if you pick
+another audio language)
+The user may know through the [textTrackChange]
+(./player_events.md#events-textTrackChange) event that the track has changed.
 
 ---
 
@@ -1347,15 +1355,19 @@ During this period of time:
 
 :warning: This option will have no effect in _DirectFile_ mode
 (see [loadVideo options](./loadVideo_options.md#prop-transport)) when either :
-- No audio track API was supported on current browser
-- The media file tracks are not supported on browser
+- No audio track API is supported on current browser
+- The inner media file tracks are not detected / shown on the browser
 
-:warning: If used on Safari, in _DirectFile_ mode, track change may change track on other
-track type (e.g. changing video track may change subtitle track too).
+:warning: If used on Safari, in _DirectFile_ mode, the track change may change
+the track on other track type (e.g. changing video track may change subtitle
+track too).
 This has two potential reasons :
 - The HLS defines variants, groups of tracks that may be read together
-- Safari may decide to enable a track for accessibility or user language convenience
-  (e.g. Safari may switch subtitle to your OS language if you pick another audio language)
+- Safari may decide to enable a track for accessibility or user language
+convenience (e.g. Safari may switch subtitle to your OS language if you pick
+another audio language)
+The user may know through the [videoTrackChange]
+(./player_events.md#events-videoTrackChange) event that the track has changed.
 
 ---
 

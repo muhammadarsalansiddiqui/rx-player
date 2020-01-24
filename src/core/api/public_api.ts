@@ -378,9 +378,9 @@ class Player extends EventEmitter<IPublicAPIEvent> {
   private _priv_trackChoiceManager : TrackChoiceManager|null;
 
   /**
-   * TrackManager instance linked to the current content.
+   * MediaElementTrackChoiceManager instance linked to the current content.
    * Null if no content has been loaded or if the current content loaded
-   * has no TrackManager.
+   * has no MediaElementTrackChoiceManager.
    */
   private _priv_mediaElementTrackChoiceManager : MediaElementTrackChoiceManager|null;
 
