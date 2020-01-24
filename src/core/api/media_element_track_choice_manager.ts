@@ -134,6 +134,7 @@ export default class MediaElementTrackChoiceManager
         const newAudioTracks = createAudioTracks();
         if (areTrackArraysDifferent(this._audioTracks, newAudioTracks)) {
           this._audioTracks = newAudioTracks;
+          this._setInitialAudioTrack();
           this.trigger("availableTracksChange", "audio");
         }
       };
@@ -141,6 +142,7 @@ export default class MediaElementTrackChoiceManager
         const newAudioTracks = createAudioTracks();
         if (areTrackArraysDifferent(this._audioTracks, newAudioTracks)) {
           this._audioTracks = newAudioTracks;
+          this._setInitialAudioTrack();
           this.trigger("availableTracksChange", "audio");
         }
       };
@@ -183,6 +185,7 @@ export default class MediaElementTrackChoiceManager
         const newTextTracks = createTextTracks();
         if (areTrackArraysDifferent(this._textTracks, newTextTracks)) {
           this._textTracks = newTextTracks;
+          this._setInitialTextTrack();
           this.trigger("availableTracksChange", "text");
         }
       };
@@ -190,6 +193,7 @@ export default class MediaElementTrackChoiceManager
         const newTextTracks = createTextTracks();
         if (areTrackArraysDifferent(this._textTracks, newTextTracks)) {
           this._textTracks = newTextTracks;
+          this._setInitialTextTrack();
           this.trigger("availableTracksChange", "text");
         }
       };
@@ -240,36 +244,6 @@ export default class MediaElementTrackChoiceManager
     }
 
     this._onTrackChange(mediaElement);
-  }
-
-  public setInitialAudioTrack() : void {
-    const preferredAudioTracks = this._preferredAudioTracks.getValue();
-    const id = this._findFirstOptimalAudioTrackId(
-      preferredAudioTracks
-        .filter(
-          (audioTrack): audioTrack is {
-            language : string;
-            audioDescription : boolean;
-          } => audioTrack !== null)
-        .map(({ language }) => normalizeLanguage(language))
-    );
-    if (id != null) {
-      this.setAudioTrackById(id);
-    }
-  }
-
-  public setInitialTextTrack() : void {
-    const preferredTextTracks = this._preferredTextTracks.getValue();
-    const id = this._findFirstOptimalTextTrackId(
-      preferredTextTracks
-        .filter(
-          (textTrack): textTrack is { language : string;
-                                      closedCaption : boolean; } => textTrack !== null)
-        .map(({ language }) =>  normalizeLanguage(language))
-    );
-    if (id !== null) {
-      this.setTextTrackById(id);
-    }
   }
 
   public setAudioTrackById(id?: string|number): void {
@@ -391,36 +365,48 @@ export default class MediaElementTrackChoiceManager
     this.removeEventListener();
   }
 
-  private _findFirstOptimalAudioTrackId(
-    normalizedLanguages: string[]
-  ): string|number|null {
+  private _setInitialAudioTrack() : void {
+    const preferredAudioTracks = this._preferredAudioTracks.getValue();
+    const normalizedLanguages = preferredAudioTracks
+      .filter(
+        (audioTrack): audioTrack is {
+          language : string;
+          audioDescription : boolean;
+        } => audioTrack !== null)
+      .map(({ language }) => normalizeLanguage(language));
+
     for (let i = 0; i < normalizedLanguages.length; i++) {
       const language = normalizedLanguages[i];
       for (let j = 0; j < this._audioTracks.length; j++) {
         const audioTrack = this._audioTracks[j];
         const normalizedLanguage = audioTrack.track.normalized;
         if (normalizedLanguage === language) {
-          return audioTrack.track.id;
+          this.setAudioTrackById(audioTrack.track.id);
+          return;
         }
       }
     }
-    return null;
   }
 
-  private _findFirstOptimalTextTrackId(
-    normalizedLanguages: string[]
-  ): string|number|null {
+  private _setInitialTextTrack() : void {
+    const preferredTextTracks = this._preferredTextTracks.getValue();
+    const normalizedLanguages = preferredTextTracks
+      .filter(
+        (textTrack): textTrack is { language : string;
+                                    closedCaption : boolean; } => textTrack !== null)
+      .map(({ language }) =>  normalizeLanguage(language));
+
     for (let i = 0; i < normalizedLanguages.length; i++) {
       const language = normalizedLanguages[i];
       for (let j = 0; j < this._textTracks.length; j++) {
         const textTrack = this._textTracks[j];
         const normalizedLanguage = textTrack.track.normalized;
         if (normalizedLanguage === language) {
-          return textTrack.track.id;
+          this.setTextTrackById(textTrack.track.id);
+          return;
         }
       }
     }
-    return null;
   }
 
   /**

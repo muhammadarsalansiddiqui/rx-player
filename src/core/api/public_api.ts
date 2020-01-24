@@ -661,9 +661,6 @@ class Player extends EventEmitter<IPublicAPIEvent> {
           new BehaviorSubject([defaultTextTrack]),
       }, this.videoElement);
 
-      let hasSetInitialAudio = false;
-      let hasSetInitialText = false;
-
       this._priv_mediaElementTrackChoiceManager
         .addEventListener("availableTracksChange", (type) => {
           switch (type) {
@@ -672,18 +669,10 @@ class Player extends EventEmitter<IPublicAPIEvent> {
                                                this.getAvailableVideoTracks());
               break;
             case "audio":
-              if (!hasSetInitialAudio) {
-                this._priv_mediaElementTrackChoiceManager?.setInitialAudioTrack();
-                hasSetInitialAudio = true;
-              }
               this._priv_triggerEventIfChanged("availableAudioTracksChange",
                                                this.getAvailableAudioTracks());
               break;
             case "text":
-              if (!hasSetInitialText) {
-                this._priv_mediaElementTrackChoiceManager?.setInitialTextTrack();
-                hasSetInitialText = true;
-              }
               this._priv_triggerEventIfChanged("availableTextTracksChange",
                                                this.getAvailableTextTracks());
               break;
