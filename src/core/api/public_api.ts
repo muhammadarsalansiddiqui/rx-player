@@ -1567,7 +1567,8 @@ class Player extends EventEmitter<IPublicAPIEvent> {
     const { currentPeriod, isDirectFile } = this._priv_contentInfos;
     if (isDirectFile) {
       return this._priv_mediaElementTrackChoiceManager?.getAvailableAudioTracks() ?? [];
-    }    if (this._priv_trackChoiceManager === null || currentPeriod === null) {
+    }
+    if (this._priv_trackChoiceManager === null || currentPeriod === null) {
       return [];
     }
     return this._priv_trackChoiceManager.getAvailableAudioTracks(currentPeriod);

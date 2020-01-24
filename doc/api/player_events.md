@@ -110,11 +110,6 @@ _payload type_: ``Array.<Object>``
 
 ---
 
-:warning: This event is not sent in _DirectFile_ mode (see [loadVideo
-options](./loadVideo_options.md#prop-transport)).
-
----
-
 Triggered when the currently available audio tracks change (e.g.: at the
 beginning of the content, when period changes...).
 
@@ -153,11 +148,6 @@ _payload type_: ``Array.<Object>``
 
 ---
 
-:warning: This event is not sent in _DirectFile_ mode (see [loadVideo
-options](./loadVideo_options.md#prop-transport)).
-
----
-
 Triggered when the currently available video tracks change (e.g.: at the
 beginning of the content, when period changes...).
 
@@ -189,15 +179,10 @@ The array emitted contains object describing each available video track:
 
 
 
-<a name="events-availableVideoTracksChange"></a>
+<a name="events-availableTextTracksChange"></a>
 ### availableTextTracksChange ##################################################
 
 _payload type_: ``Array.<Object>``
-
----
-
-:warning: This event is not sent in _DirectFile_ mode (see [loadVideo
-options](./loadVideo_options.md#prop-transport)).
 
 ---
 
@@ -233,11 +218,6 @@ _payload type_: ``Object|null``
 
 ---
 
-:warning: This event is not sent in _DirectFile_ mode (see [loadVideo
-options](./loadVideo_options.md#prop-transport)).
-
----
-
 Information about the current audio track, each time it changes (the last
 received segment got a new one).
 
@@ -261,11 +241,6 @@ _payload type_: ``Object|null``
 
 ---
 
-:warning: This event is not sent in _DirectFile_ mode (see [loadVideo
-options](./loadVideo_options.md#prop-transport)).
-
----
-
 Information about the current text track, each time it changes (the last
 received segment got a new one).
 
@@ -281,11 +256,6 @@ properties:
 ### videoTrackChange ############################################################
 
 _payload type_: ``Object|null``
-
----
-
-:warning: This event is not sent in _DirectFile_ mode (see [loadVideo
-options](./loadVideo_options.md#prop-transport)).
 
 ---
 

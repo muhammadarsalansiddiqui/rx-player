@@ -1046,10 +1046,8 @@ Each of the objects in the returned array have the following properties:
 
 In _DirectFile_ mode
 (see [loadVideo options](./loadVideo_options.md#prop-transport)) :
-- If track managing API (``mediaElement.audioTracks``) is supported on the browser
-  and media file tracks are handled by the browser :
-  returns an array of objects that have same properties than in media source mode.
-- If no streaming file or no track managing API : returns an empty Array.
+- If not supported tracks in the file or no track managing API : returns an
+empty Array.
 
 
 <a name="meth-getAvailableTextTracks"></a>
@@ -1082,10 +1080,8 @@ Each of the objects in the returned array have the following properties:
 
 In _DirectFile_ mode
 (see [loadVideo options](./loadVideo_options.md#prop-transport)) :
-- If track managing API (``mediaElement.textTracks``) is supported on the browser
-  and media file tracks are handled by the browser :
-  returns an array of objects that have same properties than in media source mode.
-- If no streaming file or no track managing API : returns an empty Array.
+- If not supported tracks in the file or no track managing API : returns an
+empty Array.
 
 
 <a name="meth-getAvailableVideoTracks"></a>
@@ -1124,10 +1120,8 @@ Each of the objects in the returned array have the following properties:
 
 In _DirectFile_ mode
 (see [loadVideo options](./loadVideo_options.md#prop-transport)) :
-- If track managing API (``mediaElement.videoTracks``) is supported on the browser
-  and media file tracks are handled by the browser :
-  returns an array of objects that have same properties than in media source mode.
-- If no streaming file or no track managing API : returns an empty Array.
+- If not supported tracks in the file or no track managing API : returns an
+empty Array.
 
 
 <a name="meth-getAudioTrack"></a>
@@ -1261,11 +1255,6 @@ Set a new audio track from its id, recuperated from ``getAvailableAudioTracks``.
 
 ---
 
-:warning: This option will have no effect in _DirectFile_ mode
-(see [loadVideo options](./loadVideo_options.md#prop-transport)) when either :
-- No audio track API is supported on current browser
-- The inner media file tracks are not detected / shown on the browser
-
 :warning: If used on Safari, in _DirectFile_ mode, the track change may change
 the track on other track type (e.g. changing video track may change subtitle
 track too).
@@ -1288,11 +1277,6 @@ _arguments_: ``string``
 Set a new text track from its id, recuperated from ``getAvailableTextTracks``.
 
 ---
-
-:warning: This option will have no effect in _DirectFile_ mode
-(see [loadVideo options](./loadVideo_options.md#prop-transport)) when either :
-- No audio track API is supported on current browser
-- The inner media file tracks are not detected / shown on the browser
 
 :warning: If used on Safari, in _DirectFile_ mode, the track change may change
 the track on other track type (e.g. changing video track may change subtitle
@@ -1352,11 +1336,6 @@ During this period of time:
       - ``setTextTrack`` will throw
 
 ---
-
-:warning: This option will have no effect in _DirectFile_ mode
-(see [loadVideo options](./loadVideo_options.md#prop-transport)) when either :
-- No audio track API is supported on current browser
-- The inner media file tracks are not detected / shown on the browser
 
 :warning: If used on Safari, in _DirectFile_ mode, the track change may change
 the track on other track type (e.g. changing video track may change subtitle
